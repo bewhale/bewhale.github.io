@@ -1,0 +1,638 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="description" content="" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>信息收集 | bewhale&#39;s blog</title>
+
+<link rel="shortcut icon" href="https://bewhale.github.io/favicon.ico?v=1666713403567">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://bewhale.github.io/styles/main.css">
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css"> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/highlight.js/9.12.0/languages//dart.min.js"></script>
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script> -->
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+    
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            bewhale&#39;s blog
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" id="changeNavbar">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+            <div class="nav-item">
+                
+                <a href="/" class="menu gt-a-link">
+                    首页
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/archives" class="menu gt-a-link">
+                    归档
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/tags" class="menu gt-a-link">
+                    标签
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/tools" class="menu gt-a-link">
+                    在线工具
+                </a>
+                
+            </div>
+            
+            <div class="nav-item">
+                
+                <a href="/post/about" class="menu gt-a-link">
+                    关于
+                </a>
+                
+            </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1666713403567"
+                action="/search/">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+<script>
+    /* 移动端导航栏展开/收起切换 */
+    document.getElementById('changeNavbar').onclick = () => {
+        var element = document.getElementById('navbarSupportedContent');
+        if (element.style.display === 'none' || element.style.display === '') {
+            element.style.display = 'block';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+</script>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    信息收集
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2021-03-02 ·
+                    </time>
+                    
+                </div>
+                <div class="post-content">
+                    <blockquote>
+<p>信息收集是指通过各种方式获取所需要的信息，以便我们在后续的渗透过程更好的进行。<br>
+最简单的比如说目标站点的IP、中间件、脚本语言、端口、邮箱等等。<br>
+信息收集对于渗透测试来说是非常重要的，我们手上掌握的目标的信息越多，成功渗透的概率就越大，而信息收集又分为两类。</p>
+</blockquote>
+<ul>
+<li>第一类：主动信息收集：通过直接访问、扫描网站，这种流量将流经网站</li>
+<li>第二类：被动信息收集：利用第三方的服务对目标进行访问了解，比例：Google搜索、Shodan搜索等</li>
+</ul>
+<p><strong>相关项目</strong><br>
+<a href="https://github.com/Qftm/Information_Collection_Handbook">Information Collection For Pentest SRC</a></p>
+<p><strong>GITBOOK</strong><br>
+<a href="https://qftm.github.io/Information_Collection_Handbook/">https://qftm.github.io/Information_Collection_Handbook/</a></p>
+<h1 id="一-whois信息">一、whois信息</h1>
+<p>查whois信息，主要关注：注册商、注册人、邮件、DNS解析服务器、注册人联系电话等<br>
+国外的网站不需要备案，有可能查不到，国内的基本上都可以查到。<br>
+如果在站长之家上隐藏了信息，可在who.is上再次查看</p>
+<ul>
+<li><a href="https://domainbigdata.com/">DomainBigData.com - Online investigation tools</a></li>
+<li>国外的who.is：https://who.is/</li>
+<li>站长之家：http://whois.chinaz.com/</li>
+<li>爱站：https://whois.aizhan.com/</li>
+<li>微步：https://x.threatbook.cn/</li>
+<li>阿里云：https://whois.aliyun.com/</li>
+<li>全球 WHOIS 查询https://www.whois365.com/cn/</li>
+<li>[爱特高级WHOIS查询系统(可以查看明文信息)[https://whois.aite.xyz/]</li>
+<li><a href="https://whois.cnnic.cn/WelcomeServlet">国家域名 Whois - 中国互联网络信息中心</a></li>
+<li><a href="http://ipwhois.cnnic.net.cn/">IP Whois - 中国互联网络信息中心</a></li>
+</ul>
+<p>进一步查企业的备案信息</p>
+<ul>
+<li>天眼查：https://www.tianyancha.com/</li>
+<li>ICP备案查询网：http://www.beianbeian.com/</li>
+<li>国家企业信用信息公示系统：http://www.gsxt.gov.cn/index.html</li>
+</ul>
+<h1 id="二-子域名">二、子域名</h1>
+<p>子域名是在顶级域名下的域名，收集的子域名越多，我们测试的目标就越多，渗透的成功率也越大。<br>
+在主站找不到突破口的时候，我们可以从子域名入手</p>
+<h2 id="利用-dns-数据集收集子域">利用 DNS 数据集收集子域</h2>
+<blockquote>
+<p>注：将需要 {domain} 换成需要查询的域名</p>
+</blockquote>
+<ul>
+<li>在线调查工具 - 反向IP，NS，MX，WHOIS和搜索工具（综合型）<br>
+https://dnslytics.com/</li>
+<li>The World's Largest Repository of Historical DNS data<br>
+https://securitytrails.com/</li>
+<li>DNSdumpster：https://dnsdumpster.com/</li>
+<li>netcraft：https://searchdns.netcraft.com/</li>
+<li>即时搜索任何站点的子域（接口多速度快）<br>
+https://w-e-b.site/?act=findomain</li>
+<li>搜索网站的所有子域<br>
+https://suip.biz/?act=amass</li>
+<li>dnsdb：https://dnsdb.io/zh-cn/search?q={domain}</li>
+<li>dnsqueries:  <a href="https://www.dnsqueries.com/en/domain_check.php">https://www.dnsqueries.com/en/domain_check.php</a></li>
+<li>ViewDNS：https://viewdns.info</li>
+<li>findsubdomains：https://findsubdomains.com/</li>
+<li>ip138：https://site.ip138.com/{domain}/domain.htm</li>
+<li>hackertarget：https://hackertarget.com/find-dns-host-records/</li>
+<li>百度云观测：http://ce.baidu.com/index/getRelatedSites?site_address={domain}</li>
+<li>circl：https://www.circl.lu/services/passive-dns/#passive-dns</li>
+<li>riddler：https://riddler.io/search?q=pld:{domain}</li>
+<li>bufferover：https://dns.bufferover.run/dns?q={domain}</li>
+<li>ipv4info：http://ipv4info.com/</li>
+<li>robtex：https://www.robtex.com/dns-lookup/</li>
+<li>sitedossier：http://www.sitedossier.com/</li>
+<li>threatcrowd：https://www.threatcrowd.org/</li>
+<li>siterankdata：https://siterankdata.com/</li>
+<li>站长工具：http://tool.chinaz.com/subdomain</li>
+<li>chinaz：https://alexa.chinaz.com/</li>
+<li>爱站：http://dns.aizhan.com</li>
+</ul>
+<h2 id="基于ssl证书查询">基于SSL证书查询</h2>
+<p>原理：</p>
+<blockquote>
+<p>“要向用户提供加密流量，网站必须先向可信的证书授权中心 (CA) 申请证书。然后，当用户尝试访问相应网站时，此证书即会被提供给浏览器以验证该网站。近年来，由于 HTTPS 证书系统存在结构性缺陷，证书以及签发证书的 CA 很容易遭到入侵和操纵。  Google 的证书透明度项目旨在通过提供一个用于监测和审核 HTTPS 证书的开放式框架，来保障证书签发流程安全无虞。”</p>
+</blockquote>
+<p>查找一个域名证书的最简单方法是使用搜索引擎来收集计算机的CT日志，并让任何搜索引擎搜索它们。前两种比较常用。</p>
+<ul>
+<li>crtsh：https://crt.sh/</li>
+<li>censys：https://censys.io/certificates</li>
+<li>spyse：https://spyse.com/search/certificate</li>
+<li>facebook：https://developers.facebook.com/tools/ct</li>
+<li>google： https://google.com/transparencyreport/https/ct/</li>
+<li>https://transparencyreport.google.com/https/certificates</li>
+<li>certspotter：https://sslmate.com/certspotter/api/</li>
+<li>entrust：https://www.entrust.com/ct-search/</li>
+<li>https://myssl.com/</li>
+</ul>
+<h2 id="利用威胁情报平台数据">利用威胁情报平台数据</h2>
+<blockquote>
+<p>注：将需要 {domain} 换成需要查询的域名, 以下平台均需注册，注册后免费试用</p>
+</blockquote>
+<ul>
+<li>alienvault：https://otx.alienvault.com/api/v1/indicators/domain/{domain}/{section}<br>
+{section} 指其他指令动作，可参考 Docs 关于 API 的使用说明。<br>
+https://otx.alienvault.com/api/v1/indicators/domain/qq.com/url_list</li>
+<li>riskiq：https://community.riskiq.com/search/{domain}/subdomains</li>
+<li>微步：https://x.threatbook.cn/nodev4/domain/{domain}<br>
+API：https://api.threatbook.cn/v3/domain/sub_domains</li>
+<li>threatminer：https://www.threatminer.org/domain.php?q={domain}</li>
+<li>virustotal：https://www.virustotal.com/ui/domains/{domain}/subdomains<br>
+或者: https://www.virustotal.com/gui/domain/{domain}/relations</li>
+<li>https://pentest-tools.com/information-gathering/find-subdomains-of-domain#</li>
+</ul>
+<h2 id="常规收集方法">常规收集方法</h2>
+<h3 id="1站点配置文件">1.站点配置文件</h3>
+<p>信息泄露问题主要就是某域名下的一些文件会存储与其相关的一些域名，如子域名。<br>
+此类文件包括跨域策略文件 crossdomain.xml，sitemap.txt、sitemap.html、sitemapindex.xml、sitemapindex.xml</p>
+<h3 id="2检查内容安全策略">2.检查内容安全策略</h3>
+<p>内容安全策略（CSP，Content Security Policy）是一种声明的安全机制，可以让网站运营者能够控制遵循 CSP 的用户代理（通常是浏览器）的行为。通过控制要启用哪些功能，以及从哪里下载内容，可以减少网站的攻击面。CSP 的主要目的是防御跨站点脚本（cross-ste scripting，XSS）攻击。例如，CSP 可以完全禁止内联的 JavaScript，并且控制外部代码从哪里加载。它也可以禁止动态代码执行。禁用了所有的攻击源，XSS 攻击变得更加困难。CSP 中的关键字有 default-src、img-src、object-src 和 script-src。其中 *-src 可能会存在域名信息。</p>
+<p>抓取方法:</p>
+<pre><code>1. 手动抓包获取
+HTTP header 的 Content-Security-Policy 属性
+
+2.Python 的 Requests 获取
+import requests
+res = requests.post(url=url, headers=headers, data=data, allow_redirects=False)
+if not res.headers['Content-Security-Policy']:
+	print(&quot;There is no Content-Security-Policy in the header&quot;)
+else:
+	处理主体代码
+</code></pre>
+<h3 id="3搜索引擎">3.搜索引擎</h3>
+<h4 id="google">Google</h4>
+<ul>
+<li>site:www.xxx.com<br>
+可以利用Google和Bing这样的搜索引擎进行搜索查询（site:www.xxx.com）<br>
+Google还支持额外的减号运算符，以排除我们对“site:wikimedia.org -www -store ”不感兴趣的子域名。</li>
+<li>site:x.x.x. <em>(目标 IP)<br>
+当我们获取到了子域名的真实 ip 后，可以尝试搜索 site:x.x.x.</em> 进行 C 段搜索，通过这种方法也能找出很多有价值的其他相关域名。</li>
+</ul>
+<h3 id="4代码仓库">4.代码仓库</h3>
+<p>在代码仓库上搜索子域名，运气好的话，可能会找到密钥之类的</p>
+<ul>
+<li>gayhub：https://github.com/</li>
+<li>阿里云代码托管：https://code.aliyun.com/</li>
+<li>码云：https://gitee.com/</li>
+</ul>
+<h3 id="5域传送">5.域传送</h3>
+<p>原理：</p>
+<blockquote>
+<p>域传送操作是指备用服务器向主服务器查询来刷新自己的 Zone 数据库，保证数据一致性。<br>
+此操作的目的是为了防止主域名服务器因意外故障变得不可用时影响到全局。<br>
+正常情况下, 只有在网络里存在备用域名 DNS 服务器时，DNS 区域传送操作才有必要执行。<br>
+一旦 DNS 服务器被错误地配置成任何人发出请求，都向其提供 Zone 数据库的拷贝，就会被攻击者利用。</p>
+</blockquote>
+<h4 id="nslookup命令">nslookup命令</h4>
+<ul>
+<li>https://blog.csdn.net/c465869935/article/details/53444117</li>
+<li>http://www.lijiejie.com/?s=DNS%E5%9F%9F%E4%BC%A0%E9%80%81%E6%BC%8F%E6%B4%9E&amp;submit=Search</li>
+</ul>
+<pre><code>如果获得了目标域名，并不清楚目标的主dns服务器时,先查询目标域名的主dns服务器
+&gt; nslookup -type=ns landgrey.cn
+
+&gt; nslookup
+默认服务器:  public1.114dns.com
+Address:  114.114.114.114
+
+&gt; server ring.cugb.edu.cn
+默认服务器:  ring.cugb.edu.cn
+Address:  202.204.105.1
+
+&gt; ls cugb.edu.cn
+</code></pre>
+<h4 id="dig-命令">dig 命令</h4>
+<p><code>dig @ns2.xxx.com  xxx.com axfr </code><br>
+ns2.xxx.com 为提供数据的服务器，xxx.com 为要传输的关键字，axfr 为区域传输选项。</p>
+<h4 id="nmap">nmap</h4>
+<p><code>nmap --script dns-zone-transfer --script-args dns-zone-transfer.domain=xxx.edu.cn -p 53 -Pn dns.xxx.edu.cn</code></p>
+<h4 id="python-中-dns-库">python 中 dns 库</h4>
+<pre><code>xfr = dns.query.xfr(where=server, zone=self.domain, timeout=5.0, lifetime=10.0)
+zone = dns.zone.from_xfr(xfr)
+</code></pre>
+<p>一般情况下，DNS 服务器都配置正确，关闭了 dns 传输或设置了白名单，漏洞利用成功的概率较低。</p>
+<h2 id="利用-dns-查询收集子域">利用 DNS 查询收集子域</h2>
+<p>原理：<br>
+通过枚举常见的 SRV 记录并做查询来收集子域 srv，以及通过查询域名的 DNS 记录中的 MX,NS,SOA,TXT 记录来收集子域。</p>
+<p>SRV 记录： 添加服务记录服务器服务记录时会添加此项，SRV 记录了哪台计算机提供了哪个服务。格式为：服务的名字. 协议的类型（例如：example-server.tcp）。<br>
+以下命令枚举给定域名的 SRV 记录:</p>
+<p><code>nmap --script dns-srv-enum.nse --script-args &quot;dns-srv-enum.domain='google.com'&quot;</code></p>
+<p>MX 记录： 建立电子邮箱服务，将指向邮件服务器地址，需要设置 MX 记录。建立邮箱时，一般会根据邮箱服务商提供的 MX 记录填写此记录。</p>
+<pre><code>nslookup
+&gt;set type=mx
+&gt;qq.com
+</code></pre>
+<p>NS 记录： 域名解析服务器记录，如果要将子域名指定某个域名服务器来解析，需要设置 NS 记录。</p>
+<pre><code>nslookup
+&gt;set type=ns
+&gt;qq.com
+</code></pre>
+<p>SOA 记录： SOA 叫做起始授权机构记录，NS 用于标识多台域名解析服务器，SOA 记录用于在众多 NS 记录中那一台是主服务器。</p>
+<pre><code>nslookup
+&gt;set type=soa
+&gt;qq.com
+</code></pre>
+<p>TXT 记录： 可任意填写，可为空。一般做一些验证记录时会使用此项，如：做 SPF（反垃圾邮件）记录</p>
+<pre><code>nslookup
+&gt;set type=txt
+&gt;qq.com
+</code></pre>
+<h2 id="爆破枚举">爆破枚举</h2>
+<p>工具很多，比较常见的是：</p>
+<ul>
+<li>layer子域名挖掘机</li>
+<li>oneforall            https://github.com/shmilylty/OneForAll</li>
+<li>dnsub     https://github.com/yunxu1/dnsub</li>
+<li>subDomainsBrute     https://github.com/lijiejie/subDomainsBrute</li>
+<li>ESD        https://github.com/FeeiCN/ESD</li>
+<li>subfinder  https://github.com/projectdiscovery/subfinder</li>
+<li>K8</li>
+<li>orangescan</li>
+<li>DNSRecon</li>
+</ul>
+<p>在线爆破子域名（不推荐）</p>
+<ul>
+<li>https://phpinfo.me/domain/</li>
+<li>http://z.zcjun.com/</li>
+</ul>
+<h1 id="三-ip-探测">三、IP-/-探测</h1>
+<h2 id="工具">工具</h2>
+<p>项目地址： <a href="https://github.com/canc3s/cIPR">canc3s/cIPR: 将域名转为ip段权重</a></p>
+<h2 id="ip收集">IP收集</h2>
+<p>一般IP的话，我们在收集子域名的时候，就大概知道目标网站的IP段了。<br>
+也可以通过whois命令获取。</p>
+<ul>
+<li>中国互联网信息中心：  http://ipwhois.cnnic.net.cn/</li>
+<li>域名查ip、ip反查域名:  https://site.ip138.com/</li>
+<li>ip地址查询ipchaxun.com:  https://ipchaxun.com/</li>
+<li>nslookup查询:  http://tool.chinaz.com/nslookup/</li>
+<li>多地ping：  http://ping.chinaz.com/</li>
+<li>Ping查询_专业的 IP 地址库_IPIP.NET<br>
+https://tools.ipip.net/ping.php</li>
+<li>Reverse IP Lookup - Find All Hosts Sharing An IP Address<br>
+https://www.ipaddress.com/reverse-ip-lookup</li>
+<li>网站IP地址查询批量查询网站IP地址买链帮手,网站批量查询工具（支持批量ip查询）<br>
+http://www.link114.cn/ip/</li>
+<li>CloudFlare老外ip数据库 发现隐藏在CloudFlare背后的坏人<br>
+http://www.crimeflare.org:82/cfs.html</li>
+</ul>
+<h2 id="真实ip获取">真实ip获取</h2>
+<p>很多时候，网站都会开启CDN加速，导致我们查询到的IP不是真实的IP，所以得先查询到真实的IP地址。</p>
+<p>参考文章：</p>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzUyMTA0MjQ4NA==&amp;mid=2247511519&amp;idx=1&amp;sn=e3b387a62642191f7b827682b29689d4">利用源服务器IP地址绕过Cloudflare WAF</a></p>
+<h3 id="1-国外主机解析域名超级ping">1. 国外主机解析域名(超级PING)</h3>
+<p>大部分 CDN 厂商因为各种原因只做了国内的线路，而针对国外的线路可能没有，此时我们使用国外的 DNS 查询，很可能获取到真实 IP。</p>
+<p>多 PING 测试工具：</p>
+<ul>
+<li>https://asm.ca.com/zh_cn/ping.php</li>
+<li>http://ping.chinaz.com/</li>
+</ul>
+<p><code>nslookup xxx.com 国外冷门DNS地址</code></p>
+<h3 id="2-网站邮件头信息">2. 网站邮件头信息</h3>
+<p>比如说，邮箱注册，邮箱找回密码、RSS 邮件订阅等功能场景，通过网站给自己发送邮件，从而让目标主动暴露他们的真实的 IP，<br>
+查看邮件头信息，获取到网站的真实 IP。</p>
+<p>另一个技巧是将邮件从你自己的邮箱发送到不存在的电子邮件地址@yourtarget.com。如果发送失败，你应该会收到一个通知。</p>
+<h3 id="3-dns-历史解析记录">3. DNS 历史解析记录</h3>
+<p>查询域名的历史解析记录，可能会找到网站使用 CDN 前的解析记录，从而获取真实 ip，相关查询的网站有：</p>
+<ul>
+<li>https://viewdns.info/iphistory/、</li>
+<li>http://toolbar.netcraft.com</li>
+</ul>
+<h3 id="4-子域名">4. 子域名</h3>
+<p>有点网站的子域名站点并没有加入 CDN，而且有可能跟主站在同一个 C 段内，这时候，就可以通过查找子域名来查找网站的真实 IP。</p>
+<h3 id="5-网络空间搜索引擎">5. 网络空间搜索引擎</h3>
+<p>通过关键字或网站域名，就可以找出被收录的 IP，很多时候获取到的就是网站的真实 IP。</p>
+<p>钟馗之眼：https://www.zoomeye.org<br>
+FOFA: https://fofa.so</p>
+<h3 id="6-利用-ssl-证书寻找真实-ip">6. 利用 SSL 证书寻找真实 IP</h3>
+<p>证书颁发机构 (CA) 必须将他们发布的每个 SSL/TLS 证书发布到公共日志中，SSL/TLS 证书通常包含域名、子域名和电子邮件地址。<br>
+SSL 证书搜索引擎：https://censys.io/ipv4?q=github.com</p>
+<p>如果你的攻击目标使用了SSL证书,在Censys选择输入时选择“证书”，提供你目标服务器的域名，点击回车。点击每个结果显示详细信息，在最右侧的搜索菜单(Explore)中选择“IPv4主机”,可以看到使用该证书的服务器IP地址</p>
+<h3 id="7-全网扫描">7. 全网扫描</h3>
+<p>通过 Zmap、masscan 等工具对整个互联网发起扫描，针对扫描结果进行关键字查找，获取网站真实 IP。</p>
+<ul>
+<li>
+<p>ZMap 号称是最快的互联网扫描工具，能够在 45 分钟扫遍全网。<br>
+https://github.com/zmap/zmap</p>
+</li>
+<li>
+<p>Masscan 号称是最快的互联网端口扫描器，最快可以在六分钟内扫遍互联网。<br>
+https://github.com/robertdavidgraham/masscan</p>
+</li>
+</ul>
+<h3 id="8-配置不当导致绕过">8. 配置不当导致绕过</h3>
+<p>在配置 CDN 的时候，需要指定域名、端口等信息，配置不当可能导致 CDN不生效。</p>
+<p>例如：<br>
+www.test.com 和 test.com 解析到同一个站点，而 CDN 只配置了 www.test.com，访问 test.com，就可以绕过 CDN 了。<br>
+站点同时支持 http 和 https 访问，CDN 只配置 https 协议，那么这时访问 http 就可以轻易绕过。</p>
+<h3 id="9-xml-rpc广播">9. XML-RPC广播</h3>
+<p>XML-RPC（远程过程调用）是一个在WordPress博客平台很有名的工具——允许管理员使用XML请求远程管理其博客。ping包是ping命令的响应包。A发送ping请求到B，B回复A收到了请求，即回复一个ping包。<br>
+访问https://www.target.com/xmlrpc.php可以轻松知道目标服务器是否启用了XML-RPC广播，启用的情况下会返回信息：XML-RPC server accepts POST requests only。</p>
+<p>根据WordPress XML-RPC Pingback API文档，该功能有sourceUri和targetUri两个参数。</p>
+<h1 id="四-旁站-c段">四、旁站、C段</h1>
+<p>旁站：是和目标网站在同一台服务器上的其它的网站。<br>
+C端：是和目标服务器ip处在同一个C段的其它服务器。</p>
+<ul>
+<li><a href="https://fofa.so/">FOFA</a>   ip=&quot;192.168.1.1/24&quot;</li>
+<li><a href="https://www.shodan.io/">shodan</a>   net=&quot;192.168.1.1/24&quot;</li>
+<li><a href="https://spyse.com/">Spyse — Internet Assets Search Engine</a></li>
+<li><a href="https://quake.360.cn/quake/welcome#/">360网络空间资产测绘 — 因为看见，所以安全</a></li>
+<li>可用子域发现-&gt;DNS-&gt;综合型<br>
+https://bgp.he.net/</li>
+<li><a href="https://pentest-tools.com/information-gathering/find-virtual-hosts#">Virtual host discovery for any IP address with Pentest-Tools.com</a></li>
+<li><a href="https://chapangzhan.com/">查旁站chapangzhan.com</a></li>
+<li><a href="http://s.tool.chinaz.com/same">Chinaz-同IP网站查询，同服务器网站查询</a></li>
+<li><a href="https://scan.top15.cn/web/webside">旁站信息 - ThreatScan</a></li>
+<li>利用Bing.com，语法为：http://cn.bing.com/search?q=ip:111.111.111.111</li>
+<li>利用Google，语法：site:125.125.125.*</li>
+<li>利用Nmap，语法：nmap -p 80,8080 –open ip/24</li>
+<li>http://www.hackmall.cn/</li>
+<li>http://www.webscan.cc/</li>
+<li>https://www.phpinfo.me/bing.php</li>
+</ul>
+<h1 id="五-隐藏资产">五、隐藏资产</h1>
+<p>很多时候访问目标资产 IP 响应多为：401、403、404、500，但是用域名请求却能返回正常的业务系统（禁止 IP 直接访问），因为这大多数都是需要绑定 host 才能正常请求访问的 （目前互联网公司基本的做法）（域名删除了 A 记录，但是反代的配置未更新），那么我们就可以通过收集到的目标的 域名 和 目标资产 的 IP 段组合起来，以 IP 段 + 域名 的形式进行捆绑碰撞，就能发现很多有意思的东西。</p>
+<p><a href="https://www.cnblogs.com/Rain99-/p/13756032.html">隐藏资产探测-hosts碰撞</a></p>
+<p>脚本：<br>
+<a href="https://github.com/fofapro/Hosts_scan">https://github.com/fofapro/Hosts_scan</a></p>
+<p>进行hosts碰撞需要目标的域名和目标的相关IP作为字典<br>
+将ip和域名分别放入 ip.txt 和 hosts.txt ，并和脚本文件放同一目录，执行即可<br>
+<code>python IP_hosts_scan.py</code></p>
+<h1 id="六-开放端口探测">六、开放端口探测</h1>
+<p>使用在线网站探测</p>
+<ul>
+<li>https://hackertarget.com/nmap-online-port-scanner/</li>
+<li>http://tool.chinaz.com/port/</li>
+<li>https://nmap.online/</li>
+<li>https://w-e-b.site/?act=nmap</li>
+</ul>
+<p>工具探测</p>
+<ul>
+<li>使用nmap探测。nmap -A -v -T4 目标ip  /   nmap -T4 -sT -p- -sV ip</li>
+<li>使用masscan探测(kali自带)</li>
+</ul>
+<p>NMAP SCRIPT HELP -VER007（nmap脚本手册）<br>
+https://www.lshack.cn/nmap-script/nmap-script-help.html</p>
+<p>常见端口漏洞：</p>
+<pre><code>端口 	服务 		说明 
+21	 FTP 		主要看是否支持匿名，也可跑弱口令 
+22 	SSH 		弱口令爆破  
+23 	telnet 		弱口令爆破 
+80-90 	WEB 		常见WEB漏洞以及一些为管理后台 
+161 	snmp 		public弱口令 
+389 	ldap 		是否为匿名访问 
+443 	openssl 		心脏出血以及一些WEB漏洞测试 
+445 	smb 		跑弱口令，检测是否有ms_08067等溢出 
+873 	rsync 		是否为匿名访问，也可以跑弱口令 
+1025 	RPC 		NFS匿名访问 
+1099 	java 		rmi 远程命令执行漏洞 
+1433 	mssql 		弱口令爆破 
+1521 	oracle 		弱口令爆破 
+2082/2083 	cpanel主机管理系统登陆 	弱口令爆破 
+2222 	DA虚拟主机管理系统登陆 	弱口令爆破 
+2601,2604 	zebra路由器 		默认密码zebra 
+3128 	squid		代理默认端口 如果没设置口令很可能就直接漫游内网 
+3306 	mysql 		弱口令爆破 
+3312/3311 	kangle		主机管理系统登陆 说明 
+3389 	RDP 		弱口令爆破，SHIFT后门，放大镜，输入法漏洞 
+4440 	rundeck 		web 
+4848 	GlassFish web中间件 	弱口令admin/adminadmin 
+5432 	postgres 		弱口令爆破 
+5560,7778 	iSqlPlus 
+5900,5901,5902	vnc 	弱口令爆破 
+5984 	CouchDB 		http://xxx:5984/_utils/ 
+6082 	varnish 
+6379 	redis 		一般无验证，直接访问 
+7001,7002 	weblogic 		弱口令爆破 
+7778 	Kloxo 		主机控制面板登录 
+8080 	tomcat\jboss 		弱口令爆破，jboss后台可能不验证 
+8649 	ganglia 
+8080-8090 	常见WEB端口 
+8083 	Vestacp主机管理系统 （国外用较多） 
+8649 	ganglia 
+8888 	amh/LuManager 	主机管理系统默认端口 说明 
+9000 	fcgi 		fcgi php命令执行漏洞 
+9200 	elasticsearch 		代码执行 
+9043 	websphere 		弱口令爆破 
+10000 	Virtualmin/Webmin 	服务器虚拟主机管理系统 
+11211 	memcache 		内存泄露 
+27017,28017 	mongodb 		未授权访问 
+50000 	Upnp 		SAP命令执行 
+50060,50030 	hadoop WEB 		未授权访问
+</code></pre>
+<p>常见端口列表整理如下：</p>
+<p>21,22,23,80-90,161,389,443,445,873,1099,1433,1521,1900,2082,2083,2222,2601,2604,3128,3306,<br>
+3311,3312,3389,4440,4848,5432,5560,5900,5901,5902,6082,6379,7001-7010,7778,8080-8090,8649,<br>
+8888,9000,9200,10000,11211,27017,28017,50000,50030,50060</p>
+<h1 id="七-网站架构探测">七、网站架构探测</h1>
+<p>当我们探测目标站点网站架构时，比如说：操作系统，中间件，脚本语言，数据库，服务器，web容器等等，可以使用以下方法查询。</p>
+<h2 id="手动探测">手动探测</h2>
+<ul>
+<li>查看数据包响应头</li>
+<li>访问robots.txt   # 一般的CMS会在网站根路径下的robots.txt留下相关信息：</li>
+<li>访问不存在的页面 # 随意提交一个错误页面，不同中间件Apache、IIS、nginx的默认的错误页面都是不同的，而且不同版本的错误页面也是不同的。</li>
+<li>http://www.xxx.com/index.html  http://www.xxx.com/inDex.html  Windows操作系统不区分大小写，Linux系统大小写敏感，更改链接大小写访问404说明是Linux，200则是win</li>
+</ul>
+<h2 id="工具-2">工具</h2>
+<ul>
+<li>
+<p>wappalyzer插件——浏览器插件</p>
+</li>
+<li>
+<p>云悉：<br>
+http://www.yunsee.cn/info.html</p>
+</li>
+<li>
+<p>CMS指纹识别：<br>
+http://whatweb.bugscaner.com/look/</p>
+</li>
+<li>
+<p>ThreatScan - 免费的网站在线安全检测平台-TScan<br>
+https://scan.top15.cn/web/</p>
+</li>
+</ul>
+<h1 id="八-敏感文件-敏感目录探测">八、敏感文件、敏感目录探测</h1>
+<p>通常我们所说的敏感文件、敏感目录大概有以下几种：</p>
+<ul>
+<li>Git</li>
+<li>hg/Mercurial</li>
+<li>svn/Subversion</li>
+<li>bzr/Bazaar</li>
+<li>Cvs</li>
+<li>WEB-INF泄露</li>
+<li>备份文件泄露、配置文件泄露</li>
+</ul>
+<p>敏感文件、敏感目录挖掘一般都是靠工具、脚本来找，当然大佬手工也能找得到。</p>
+<p>常用的工具有：</p>
+<ul>
+<li>
+<p>御剑</p>
+</li>
+<li>
+<p>爬虫（AWVS、Burpsuite等）</p>
+</li>
+<li>
+<p>搜索引擎（Google、Github等）<br>
+<a href="https://www.0xll.cc/google_hack.html">Google Hacking</a><br>
+<a href="https://www.exploit-db.com/google-hacking-database">Google Hacking Database</a><br>
+<a href="https://w-e-b.site/?act=google-search">Google高级搜索</a></p>
+</li>
+<li>
+<p>wwwscan</p>
+</li>
+<li>
+<p>[BBscan](https://github.com/lijiejie/BBScan）</p>
+</li>
+<li>
+<p>[GitHub Sensitive Information Leakage](https://github.com/FeeiCN/GSIL）</p>
+</li>
+</ul>
+<h1 id="九-目标域名邮箱收集">九、目标域名邮箱收集</h1>
+<p>用途： 可用来进行爆破或者弱口令登录以及撞裤攻击。</p>
+<ul>
+<li>通过说明文档以及网站页面收集，或者网站发表者以及留言板信息处收集账号</li>
+<li>通过 teemo，metago，burpusit，awvs，netspker 或者 google 语法收集</li>
+<li>搜索相关 QQ 群收集相关企业员工的社交账号</li>
+</ul>
+<h1 id="十-waf探测">十、WAF探测</h1>
+<p>Waf也叫Web应用防火墙，是通过执行一系列针对HTTP/HTTPS的安全策略来专门为Web应用提供保护的一款产品。</p>
+<ul>
+<li>手动提交恶意数据，查看拦截页面</li>
+<li>工具（WAFW00F、Nmap）</li>
+</ul>
+<p>Nmap</p>
+<pre><code>nmap -p80,443 --=http-waf-detect ip
+nmap -p80,443 --=http-waf-fingerprint ip
+</code></pre>
+<p>WAFW00F探测WAF<br>
+<code>wafw00f -a 域名</code></p>
+
+                </div>
+            </article>
+        </div>
+
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first"></div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/bewhale" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        Powered by <a href="https://github.com/bewhale" target="_blank">bewhale</a>
+    </div>
+</div>
+
+<script>
+  hljs.highlightAll()
+</script>
+
+    </div>
+</div>
+</body>
+</html>
